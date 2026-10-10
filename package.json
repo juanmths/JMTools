@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
+    "package": "tsc -b && vite build && tar.exe -a -c -f jmtools-hostinger-deploy.zip -C dist assets .htaccess _redirects favicon.svg icons.svg index.html",
     "lint": "oxlint",
     "preview": "vite preview"
   },
