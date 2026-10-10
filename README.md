@@ -48,3 +48,39 @@ Aplikasi web modern untuk konversi berkas, pengubahan ukuran (resize), dan kompr
    ```bash
    npm run build
    ```
+
+---
+
+## Panduan Upload ke Hosting
+
+Proyek ini telah dikonfigurasi dan siap di-deploy ke berbagai jenis hosting:
+
+### 1. Vercel (Sangat Direkomendasikan — Gratis & Otomatis)
+1. Buka [vercel.com](https://vercel.com) dan login dengan akun GitHub Anda.
+2. Klik **Add New...** > **Project**.
+3. Pilih repositori **juanmths/JMTools**.
+4. Klik **Deploy** (Vercel otomatis mendeteksi Vite & `vercel.json` sudah disediakan).
+5. Selesai! Setiap ada commit baru di branch `main`, web akan ter-update otomatis.
+
+### 2. Netlify
+1. Buka [netlify.com](https://netlify.com) dan import repositori GitHub **juanmths/JMTools**.
+2. Build command: `npm run build`, Publish directory: `dist`.
+3. File `_redirects` sudah disertakan di folder `dist` untuk penanganan rute SPA.
+
+### 3. cPanel / Shared Hosting (Hostinger, Niagahoster, dll.)
+1. Jalankan `npm run build` di komputer lokal Anda.
+2. Buka folder `dist/`.
+3. Kompres semua isi folder `dist/` menjadi file `.zip` (pastikan file `.htaccess` terikut).
+4. Buka **File Manager** cPanel > masuk ke folder `public_html`.
+5. Ekstrak file `.zip` langsung di dalam `public_html`.
+6. File `.htaccess` bawaan akan otomatis menangani URL routing dan caching file statis.
+
+### 4. VPS (Nginx)
+Jika menggunakan Nginx, tambahkan baris `try_files` pada blok server Anda:
+```nginx
+location / {
+    root /var/www/jmtools/dist;
+    index index.html;
+    try_files $uri $uri/ /index.html;
+}
+```
