@@ -18,6 +18,7 @@ import RotateImagePage from './pages/tools/RotateImagePage'
 import WatermarkImagePage from './pages/tools/WatermarkImagePage'
 import AddWatermarkPage from './pages/tools/AddWatermarkPage'
 import EditPdfPage from './pages/tools/EditPdfPage'
+import JpgToPdfPage from './pages/tools/JpgToPdfPage'
 import MergePdfPage from './pages/tools/MergePdfPage'
 import ProtectPdfPage from './pages/tools/ProtectPdfPage'
 import RemoveWatermarkPage from './pages/tools/RemoveWatermarkPage'
@@ -52,6 +53,7 @@ const router = createBrowserRouter([
       { path: '/tools/rotate-pdf', element: <RotatePdfPage /> },
       { path: '/tools/split-pdf', element: <SplitPdfPage /> },
       { path: '/tools/protect-pdf', element: <ProtectPdfPage /> },
+      { path: '/tools/jpg-to-pdf', element: <JpgToPdfPage /> },
       // Standard conversion & format landing pages
       { path: '/tools/:slug', element: <ToolLandingPage /> },
       { path: '/faq', element: <FaqPage /> },

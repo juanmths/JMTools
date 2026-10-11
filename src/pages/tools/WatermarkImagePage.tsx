@@ -1,14 +1,17 @@
 import {
   Check,
   Download,
+  FileImage,
   ImageIcon,
   Loader2,
   RefreshCw,
   Stamp,
+  Type,
   Upload,
 } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { Alert, Button, Card } from '../../components/ui'
+import { consumeCredit } from '../../lib/authStore'
 import { formatBytes } from '../../lib/utils'
 
 type Position = 'tl' | 'tc' | 'tr' | 'ml' | 'center' | 'mr' | 'bl' | 'bc' | 'br' | 'tile'
@@ -18,13 +21,21 @@ export default function WatermarkImagePage() {
   const [previewUrl, setPreviewUrl] = useState<string>()
   const [imgElement, setImgElement] = useState<HTMLImageElement>()
 
-  // Watermark Settings
+  // Watermark Type: 'text' or 'image' (logo)
+  const [wmMode, setWmMode] = useState<'text' | 'image'>('text')
+
+  // Text Watermark Settings
   const [text, setText] = useState('HAK CIPTA DILINDUNGI')
   const [fontSize, setFontSize] = useState<number>(36)
   const [opacity, setOpacity] = useState<number>(60)
   const [color, setColor] = useState<string>('#ffffff')
   const [position, setPosition] = useState<Position>('br')
   const [angle, setAngle] = useState<number>(0)
+
+  // Logo Watermark Settings
+  const [logoFile, setLogoFile] = useState<File>()
+  const [logoElement, setLogoElement] = useState<HTMLImageElement>()
+  const [logoScale, setLogoScale] = useState<number>(25) // percentage of base image width
 
   const [processing, setProcessing] = useState(false)
   const [error, setError] = useState<string>()
@@ -57,7 +68,21 @@ export default function WatermarkImagePage() {
     img.src = url
   }
 
-  // Draw Watermark on Canvas
+  const handleLogoFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const f = e.target.files?.[0]
+    if (!f) return
+    setLogoFile(f)
+
+    const url = URL.createObjectURL(f)
+    const img = new Image()
+    img.onload = () => {
+      setLogoElement(img)
+      URL.revokeObjectURL(url)
+    }
+    img.src = url
+  }
+
+  // Draw Watermark on Canvas (Text or Logo)
   useEffect(() => {
     if (!imgElement || !canvasRef.current) return
     const canvas = canvasRef.current
@@ -69,101 +94,161 @@ export default function WatermarkImagePage() {
     // Draw background original image
     ctx.drawImage(imgElement, 0, 0)
 
-    if (!text.trim()) return
+    if (wmMode === 'text') {
+      if (!text.trim()) return
 
-    ctx.save()
-    ctx.globalAlpha = opacity / 100
-    ctx.fillStyle = color
-    ctx.font = `bold ${fontSize}px sans-serif`
-    ctx.textBaseline = 'middle'
+      ctx.save()
+      ctx.globalAlpha = opacity / 100
+      ctx.fillStyle = color
+      ctx.font = `bold ${fontSize}px sans-serif`
+      ctx.textBaseline = 'middle'
 
-    // Add subtle shadow for visibility on any background
-    ctx.shadowColor = 'rgba(0, 0, 0, 0.7)'
-    ctx.shadowBlur = 6
-    ctx.shadowOffsetX = 2
-    ctx.shadowOffsetY = 2
+      // Add subtle shadow for visibility on any background
+      ctx.shadowColor = 'rgba(0, 0, 0, 0.7)'
+      ctx.shadowBlur = 6
+      ctx.shadowOffsetX = 2
+      ctx.shadowOffsetY = 2
 
-    const metrics = ctx.measureText(text)
-    const textWidth = metrics.width
-    const padding = fontSize
+      const metrics = ctx.measureText(text)
+      const textWidth = metrics.width
+      const padding = fontSize
 
-    if (position === 'tile') {
-      // Repeat across entire image
-      const stepX = textWidth + fontSize * 2
-      const stepY = fontSize * 3
-      for (let x = 0; x < canvas.width + stepX; x += stepX) {
-        for (let y = 0; y < canvas.height + stepY; y += stepY) {
-          ctx.save()
-          ctx.translate(x, y)
-          ctx.rotate((-30 * Math.PI) / 180)
-          ctx.fillText(text, 0, 0)
-          ctx.restore()
+      if (position === 'tile') {
+        const stepX = textWidth + fontSize * 2
+        const stepY = fontSize * 3
+        for (let x = 0; x < canvas.width + stepX; x += stepX) {
+          for (let y = 0; y < canvas.height + stepY; y += stepY) {
+            ctx.save()
+            ctx.translate(x, y)
+            ctx.rotate((-30 * Math.PI) / 180)
+            ctx.fillText(text, 0, 0)
+            ctx.restore()
+          }
         }
+      } else {
+        let x = 0
+        let y = 0
+
+        switch (position) {
+          case 'tl':
+            x = padding
+            y = padding + fontSize / 2
+            ctx.textAlign = 'left'
+            break
+          case 'tc':
+            x = canvas.width / 2
+            y = padding + fontSize / 2
+            ctx.textAlign = 'center'
+            break
+          case 'tr':
+            x = canvas.width - padding
+            y = padding + fontSize / 2
+            ctx.textAlign = 'right'
+            break
+          case 'ml':
+            x = padding
+            y = canvas.height / 2
+            ctx.textAlign = 'left'
+            break
+          case 'center':
+            x = canvas.width / 2
+            y = canvas.height / 2
+            ctx.textAlign = 'center'
+            break
+          case 'mr':
+            x = canvas.width - padding
+            y = canvas.height / 2
+            ctx.textAlign = 'right'
+            break
+          case 'bl':
+            x = padding
+            y = canvas.height - padding - fontSize / 2
+            ctx.textAlign = 'left'
+            break
+          case 'bc':
+            x = canvas.width / 2
+            y = canvas.height - padding - fontSize / 2
+            ctx.textAlign = 'center'
+            break
+          case 'br':
+            x = canvas.width - padding
+            y = canvas.height - padding - fontSize / 2
+            ctx.textAlign = 'right'
+            break
+        }
+
+        ctx.save()
+        ctx.translate(x, y)
+        if (angle !== 0) ctx.rotate((angle * Math.PI) / 180)
+        ctx.fillText(text, 0, 0)
+        ctx.restore()
       }
-    } else {
+
+      ctx.restore()
+    } else if (wmMode === 'image' && logoElement) {
+      // LOGO / IMAGE WATERMARK MODE
+      ctx.save()
+      ctx.globalAlpha = opacity / 100
+
+      const targetLogoWidth = (canvas.width * logoScale) / 100
+      const logoAspect = logoElement.naturalWidth / logoElement.naturalHeight
+      const targetLogoHeight = targetLogoWidth / logoAspect
+
+      const padding = 24
       let x = 0
       let y = 0
 
       switch (position) {
         case 'tl':
           x = padding
-          y = padding + fontSize / 2
-          ctx.textAlign = 'left'
+          y = padding
           break
         case 'tc':
-          x = canvas.width / 2
-          y = padding + fontSize / 2
-          ctx.textAlign = 'center'
+          x = (canvas.width - targetLogoWidth) / 2
+          y = padding
           break
         case 'tr':
-          x = canvas.width - padding
-          y = padding + fontSize / 2
-          ctx.textAlign = 'right'
+          x = canvas.width - targetLogoWidth - padding
+          y = padding
           break
         case 'ml':
           x = padding
-          y = canvas.height / 2
-          ctx.textAlign = 'left'
+          y = (canvas.height - targetLogoHeight) / 2
           break
         case 'center':
-          x = canvas.width / 2
-          y = canvas.height / 2
-          ctx.textAlign = 'center'
+          x = (canvas.width - targetLogoWidth) / 2
+          y = (canvas.height - targetLogoHeight) / 2
           break
         case 'mr':
-          x = canvas.width - padding
-          y = canvas.height / 2
-          ctx.textAlign = 'right'
+          x = canvas.width - targetLogoWidth - padding
+          y = (canvas.height - targetLogoHeight) / 2
           break
         case 'bl':
           x = padding
-          y = canvas.height - padding - fontSize / 2
-          ctx.textAlign = 'left'
+          y = canvas.height - targetLogoHeight - padding
           break
         case 'bc':
-          x = canvas.width / 2
-          y = canvas.height - padding - fontSize / 2
-          ctx.textAlign = 'center'
+          x = (canvas.width - targetLogoWidth) / 2
+          y = canvas.height - targetLogoHeight - padding
           break
         case 'br':
-          x = canvas.width - padding
-          y = canvas.height - padding - fontSize / 2
-          ctx.textAlign = 'right'
+        default:
+          x = canvas.width - targetLogoWidth - padding
+          y = canvas.height - targetLogoHeight - padding
           break
       }
 
-      ctx.save()
-      ctx.translate(x, y)
-      if (angle !== 0) ctx.rotate((angle * Math.PI) / 180)
-      ctx.fillText(text, 0, 0)
+      ctx.drawImage(logoElement, x, y, targetLogoWidth, targetLogoHeight)
       ctx.restore()
     }
-
-    ctx.restore()
-  }, [imgElement, text, fontSize, opacity, color, position, angle])
+  }, [imgElement, wmMode, text, fontSize, opacity, color, position, angle, logoElement, logoScale])
 
   const stampWatermark = async () => {
     if (!canvasRef.current || !file) return
+
+    const { allowed } = consumeCredit()
+    if (!allowed) return
+
     setProcessing(true)
     setError(undefined)
 
@@ -196,6 +281,8 @@ export default function WatermarkImagePage() {
     setFile(undefined)
     setPreviewUrl(undefined)
     setImgElement(undefined)
+    setLogoFile(undefined)
+    setLogoElement(undefined)
     setResultBlob(undefined)
     setResultUrl(undefined)
     setError(undefined)
@@ -206,13 +293,13 @@ export default function WatermarkImagePage() {
       {/* Header */}
       <div className="text-center space-y-2">
         <div className="inline-flex items-center gap-2 rounded-full bg-fuchsia-50 px-3 py-1 text-xs font-semibold text-fuchsia-700 ring-1 ring-fuchsia-200 dark:bg-fuchsia-950/60 dark:text-fuchsia-300 dark:ring-fuchsia-800">
-          <Stamp className="size-3.5" /> Lindungi Hak Cipta Gambar
+          <Stamp className="size-3.5" /> Lindungi Hak Cipta & Brand Foto
         </div>
         <h1 className="text-3xl font-extrabold tracking-tight sm:text-4xl text-slate-900 dark:text-white">
-          Tambah Watermark Gambar (Watermark IMAGE)
+          Tambah Watermark Teks & Logo Gambar
         </h1>
         <p className="text-sm sm:text-base text-slate-500 max-w-xl mx-auto">
-          Tambahkan teks tanda air, nama brand, atau hak cipta transparan di atas foto Anda dengan mudah.
+          Bubuhkan nama merek, stempel hak cipta, atau logo PNG transparan Anda di atas foto dengan tata letak presisi.
         </p>
       </div>
 
@@ -224,7 +311,7 @@ export default function WatermarkImagePage() {
             <ImageIcon className="size-8" />
           </div>
           <h3 className="mt-4 text-lg font-bold text-slate-900 dark:text-white">
-            Pilih Berkas Gambar untuk Diberi Watermark
+            Pilih Berkas Foto untuk Diberi Watermark
           </h3>
           <p className="mt-1 text-sm text-slate-500">Mendukung format JPG, PNG, WEBP, dan GIF</p>
 
@@ -242,56 +329,131 @@ export default function WatermarkImagePage() {
         <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
           {/* Controls Panel */}
           <Card className="md:col-span-1 space-y-4">
-            <h3 className="font-bold text-sm text-slate-900 dark:text-white flex items-center gap-2">
-              <Stamp className="size-4 text-fuchsia-600" /> Teks & Gaya Watermark
-            </h3>
-
-            {/* Teks Watermark */}
-            <div className="space-y-1.5">
-              <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
-                Teks Watermark:
-              </label>
-              <input
-                type="text"
-                value={text}
-                onChange={(e) => setText(e.target.value)}
-                placeholder="Mis. @namatokomu / Dilarang Kopi"
-                className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-xs font-semibold text-slate-800 dark:border-slate-800 dark:bg-slate-900 dark:text-white focus:border-fuchsia-500 focus:outline-none"
-              />
+            {/* Mode Switcher: Text vs Image Logo */}
+            <div className="flex rounded-xl bg-slate-100 p-1 dark:bg-slate-800">
+              <button
+                type="button"
+                onClick={() => setWmMode('text')}
+                className={`flex-1 flex items-center justify-center gap-1.5 rounded-lg py-1.5 text-xs font-bold transition-all ${
+                  wmMode === 'text'
+                    ? 'bg-white text-slate-900 shadow-sm dark:bg-slate-900 dark:text-white'
+                    : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'
+                }`}
+              >
+                <Type className="size-3.5" /> Teks Watermark
+              </button>
+              <button
+                type="button"
+                onClick={() => setWmMode('image')}
+                className={`flex-1 flex items-center justify-center gap-1.5 rounded-lg py-1.5 text-xs font-bold transition-all ${
+                  wmMode === 'image'
+                    ? 'bg-white text-slate-900 shadow-sm dark:bg-slate-900 dark:text-white'
+                    : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'
+                }`}
+              >
+                <FileImage className="size-3.5" /> Logo / Gambar
+              </button>
             </div>
 
-            {/* Warna & Sudut */}
-            <div className="grid grid-cols-2 gap-2">
-              <div className="space-y-1">
-                <label className="text-[11px] font-semibold text-slate-600 dark:text-slate-400">Warna Teks:</label>
-                <div className="flex items-center gap-2">
+            {wmMode === 'text' ? (
+              /* Text Watermark Settings */
+              <div className="space-y-3">
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
+                    Teks Watermark:
+                  </label>
                   <input
-                    type="color"
-                    value={color}
-                    onChange={(e) => setColor(e.target.value)}
-                    className="size-8 rounded-lg cursor-pointer border-0"
+                    type="text"
+                    value={text}
+                    onChange={(e) => setText(e.target.value)}
+                    placeholder="Mis. @namatokomu"
+                    className="w-full rounded-xl border border-slate-200 bg-white p-2.5 text-xs font-semibold dark:border-slate-800 dark:bg-slate-900"
                   />
-                  <span className="text-xs font-mono">{color}</span>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="space-y-1">
+                    <label className="text-[11px] font-semibold text-slate-600 dark:text-slate-400">Warna:</label>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="color"
+                        value={color}
+                        onChange={(e) => setColor(e.target.value)}
+                        className="size-8 rounded-lg cursor-pointer border-0"
+                      />
+                      <span className="text-xs font-mono">{color}</span>
+                    </div>
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-[11px] font-semibold text-slate-600 dark:text-slate-400">Kemiringan:</label>
+                    <select
+                      value={angle}
+                      onChange={(e) => setAngle(Number(e.target.value))}
+                      className="w-full rounded-xl border border-slate-200 bg-white p-2 text-xs dark:border-slate-800 dark:bg-slate-900"
+                    >
+                      <option value={0}>Lurus (0°)</option>
+                      <option value={-30}>Diagonal (-30°)</option>
+                      <option value={-45}>Miring (-45°)</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="space-y-1 rounded-xl bg-slate-50 p-3 dark:bg-slate-800/60 text-xs">
+                  <div className="flex justify-between font-semibold">
+                    <span>Ukuran Font:</span>
+                    <span className="text-fuchsia-600 font-bold">{fontSize}px</span>
+                  </div>
+                  <input
+                    type="range"
+                    min="16"
+                    max="96"
+                    value={fontSize}
+                    onChange={(e) => setFontSize(Number(e.target.value))}
+                    className="w-full accent-fuchsia-600"
+                  />
                 </div>
               </div>
+            ) : (
+              /* Logo / Image Watermark Settings */
+              <div className="space-y-3">
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
+                    Unggah Logo (PNG Transparan):
+                  </label>
+                  <label className="flex flex-col items-center justify-center p-3 rounded-xl border-2 border-dashed border-slate-200 bg-slate-50 cursor-pointer hover:border-fuchsia-500 dark:border-slate-800 dark:bg-slate-900">
+                    <Upload className="size-4 text-fuchsia-600 mb-1" />
+                    <span className="text-[11px] text-slate-500 font-semibold truncate max-w-[180px]">
+                      {logoFile ? logoFile.name : 'Pilih Logo PNG'}
+                    </span>
+                    <input
+                      type="file"
+                      accept="image/png,image/webp,image/svg+xml"
+                      className="sr-only"
+                      onChange={handleLogoFile}
+                    />
+                  </label>
+                </div>
 
-              <div className="space-y-1">
-                <label className="text-[11px] font-semibold text-slate-600 dark:text-slate-400">Kemiringan:</label>
-                <select
-                  value={angle}
-                  onChange={(e) => setAngle(Number(e.target.value))}
-                  className="w-full rounded-xl border border-slate-200 bg-white p-2 text-xs dark:border-slate-800 dark:bg-slate-900"
-                >
-                  <option value={0}>Lurus (0°)</option>
-                  <option value={-30}>Diagonal (-30°)</option>
-                  <option value={-45}>Miring (-45°)</option>
-                  <option value={30}>Miring (+30°)</option>
-                </select>
+                <div className="space-y-1 rounded-xl bg-slate-50 p-3 dark:bg-slate-800/60 text-xs">
+                  <div className="flex justify-between font-semibold">
+                    <span>Ukuran Skala Logo:</span>
+                    <span className="text-fuchsia-600 font-bold">{logoScale}%</span>
+                  </div>
+                  <input
+                    type="range"
+                    min="10"
+                    max="70"
+                    value={logoScale}
+                    onChange={(e) => setLogoScale(Number(e.target.value))}
+                    className="w-full accent-fuchsia-600"
+                  />
+                </div>
               </div>
-            </div>
+            )}
 
             {/* Opasitas Slider */}
-            <div className="space-y-1.5 rounded-xl bg-slate-50 p-3 dark:bg-slate-800/60 text-xs">
+            <div className="space-y-1 rounded-xl bg-slate-50 p-3 dark:bg-slate-800/60 text-xs">
               <div className="flex justify-between font-semibold">
                 <span>Transparansi (Opasitas):</span>
                 <span className="text-fuchsia-600 font-bold">{opacity}%</span>
@@ -306,34 +468,18 @@ export default function WatermarkImagePage() {
               />
             </div>
 
-            {/* Ukuran Font Slider */}
-            <div className="space-y-1.5 rounded-xl bg-slate-50 p-3 dark:bg-slate-800/60 text-xs">
-              <div className="flex justify-between font-semibold">
-                <span>Ukuran Font:</span>
-                <span className="text-fuchsia-600 font-bold">{fontSize}px</span>
-              </div>
-              <input
-                type="range"
-                min="16"
-                max="96"
-                value={fontSize}
-                onChange={(e) => setFontSize(Number(e.target.value))}
-                className="w-full accent-fuchsia-600"
-              />
-            </div>
-
             {/* Posisi 9-Grid */}
             <div className="space-y-1.5">
               <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
                 Posisi Tanda Air:
               </label>
-              <div className="grid grid-cols-3 gap-1.5 max-w-[150px] mx-auto">
+              <div className="grid grid-cols-3 gap-1.5 max-w-[140px] mx-auto">
                 {(['tl', 'tc', 'tr', 'ml', 'center', 'mr', 'bl', 'bc', 'br'] as Position[]).map((p) => (
                   <button
                     key={p}
                     type="button"
                     onClick={() => setPosition(p)}
-                    className={`size-10 rounded-lg text-xs font-bold transition-all ${
+                    className={`size-9 rounded-lg text-xs font-bold transition-all ${
                       position === p
                         ? 'bg-fuchsia-600 text-white shadow-sm ring-2 ring-fuchsia-400'
                         : 'bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-400'
@@ -343,17 +489,19 @@ export default function WatermarkImagePage() {
                   </button>
                 ))}
               </div>
-              <button
-                type="button"
-                onClick={() => setPosition('tile')}
-                className={`w-full mt-2 rounded-xl py-1.5 text-xs font-semibold transition-all ${
-                  position === 'tile'
-                    ? 'bg-fuchsia-600 text-white shadow-sm'
-                    : 'border border-slate-200 bg-slate-50 text-slate-700 dark:border-slate-800 dark:bg-slate-800 dark:text-slate-300'
-                }`}
-              >
-                Pola Penuh (Repeated Tile)
-              </button>
+              {wmMode === 'text' && (
+                <button
+                  type="button"
+                  onClick={() => setPosition('tile')}
+                  className={`w-full mt-2 rounded-xl py-1 text-xs font-semibold transition-all ${
+                    position === 'tile'
+                      ? 'bg-fuchsia-600 text-white shadow-sm'
+                      : 'border border-slate-200 bg-slate-50 text-slate-700 dark:border-slate-800 dark:bg-slate-800 dark:text-slate-300'
+                  }`}
+                >
+                  Pola Berulang (Tiled Pattern)
+                </button>
+              )}
             </div>
 
             <Button variant="ghost" size="md" className="w-full text-xs" onClick={resetAll}>
@@ -366,7 +514,7 @@ export default function WatermarkImagePage() {
             <div>
               <h3 className="font-bold text-base text-slate-900 dark:text-white">Pratinjau Watermark</h3>
               <p className="text-xs text-slate-500 mt-0.5">
-                Pratinjau langsung bagaimana watermark akan muncul di berkas asli.
+                Pratinjau langsung tanda air di atas foto asli Anda.
               </p>
             </div>
 

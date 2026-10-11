@@ -352,6 +352,7 @@ export const ALL_TOOLS: ToolDef[] = [
     icon: Image,
     color: 'bg-sky-50 text-sky-600 dark:bg-sky-950/60 dark:text-sky-400',
     badge: 'Populer',
+    isInteractive: true,
     route: '/tools/jpg-to-pdf',
   },
   {
