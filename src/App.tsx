@@ -1,9 +1,11 @@
 import { createBrowserRouter, RouterProvider } from 'react-router-dom'
 import { Layout } from './components/Layout'
+import CheckoutPage from './pages/CheckoutPage'
 import ConvertPage from './pages/ConvertPage'
 import HomePage from './pages/HomePage'
 import { FaqPage, PrivacyPage } from './pages/InfoPages'
 import NotFoundPage from './pages/NotFoundPage'
+import PricingPage from './pages/PricingPage'
 import ResultPage from './pages/ResultPage'
 import ToolLandingPage from './pages/ToolLandingPage'
 import CompressImagePage from './pages/tools/CompressImagePage'
@@ -30,6 +32,9 @@ const router = createBrowserRouter([
       { path: '/', element: <HomePage /> },
       { path: '/convert', element: <ConvertPage /> },
       { path: '/convert/result/:jobId', element: <ResultPage /> },
+      // Pricing & Checkout
+      { path: '/pricing', element: <PricingPage /> },
+      { path: '/checkout', element: <CheckoutPage /> },
       // Dedicated interactive Image tools (iLoveIMG style)
       { path: '/tools/compress-image', element: <CompressImagePage /> },
       { path: '/tools/resize-image', element: <ResizeImagePage /> },

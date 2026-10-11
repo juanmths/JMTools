@@ -1,4 +1,5 @@
 import {
+  Crown,
   FileCheck2,
   FileText,
   Image as ImageIcon,
@@ -228,6 +229,29 @@ export default function HomePage() {
             })}
           </div>
         )}
+      </section>
+
+      {/* Lifetime Deal Promo Banner */}
+      <section className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-amber-500 via-rose-500 to-indigo-600 p-8 sm:p-10 text-white shadow-xl">
+        <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-6">
+          <div className="space-y-2 text-center md:text-left">
+            <div className="inline-flex items-center gap-1.5 rounded-full bg-white/20 px-3 py-1 text-xs font-extrabold backdrop-blur">
+              <Crown className="size-3.5" /> PENAWARAN TERBATAS • HANYA RP 149.000
+            </div>
+            <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
+              Akses Penuh Seumur Hidup, Sekali Bayar Selamanya!
+            </h2>
+            <p className="text-xs sm:text-sm text-white/90 max-w-xl">
+              Nikmati seluruh 30+ alat PDF dan Gambar tanpa batas ukuran file, tanpa antrean, bebas iklan, dan gratis semua fitur mendatang.
+            </p>
+          </div>
+          <Link
+            to="/pricing"
+            className="shrink-0 inline-flex items-center gap-2 rounded-2xl bg-white px-6 py-3.5 text-sm font-extrabold text-slate-900 shadow-lg hover:bg-slate-100 transition-all hover:scale-105"
+          >
+            <Crown className="size-4 text-amber-500" /> Beli Akses Seumur Hidup
+          </Link>
+        </div>
       </section>
     </div>
   )

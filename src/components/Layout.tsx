@@ -1,14 +1,15 @@
-import { ChevronDown, FileText, Image as ImageIcon, Layers, Menu, X } from 'lucide-react'
+import { ChevronDown, Crown, FileText, Image as ImageIcon, Layers, Menu, X } from 'lucide-react'
 import { useState } from 'react'
 import { Link, NavLink, Outlet, ScrollRestoration, useLocation } from 'react-router-dom'
 import { ALL_TOOLS, CATEGORIES } from '../lib/pdfTools'
+import { usePremium } from '../lib/premiumStore'
 import { cn } from '../lib/utils'
 
 const YEAR = new Date().getFullYear()
 
 const navLink = ({ isActive }: { isActive: boolean }) =>
   cn(
-    'rounded-lg px-3 py-2 text-sm font-medium transition-colors',
+    'rounded-lg px-2.5 py-2 text-sm font-medium transition-colors',
     isActive ? 'text-indigo-600 dark:text-indigo-400 font-bold' : 'text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white',
   )
 
@@ -16,7 +17,7 @@ function PdfToolsMenu() {
   const pdfCategories = CATEGORIES.filter((c) => c.kind === 'pdf')
   return (
     <details className="group relative">
-      <summary className="flex cursor-pointer list-none items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium text-slate-700 hover:text-indigo-600 dark:text-slate-300 dark:hover:text-indigo-400">
+      <summary className="flex cursor-pointer list-none items-center gap-1.5 rounded-lg px-2.5 py-2 text-sm font-medium text-slate-700 hover:text-indigo-600 dark:text-slate-300 dark:hover:text-indigo-400">
         <FileText className="size-4 text-rose-500" />
         <span>Alat PDF</span>
         <ChevronDown className="size-3.5 text-slate-400 transition-transform group-open:rotate-180" />
@@ -24,7 +25,7 @@ function PdfToolsMenu() {
       <div className="absolute left-0 z-40 mt-2 w-[720px] max-h-[540px] overflow-y-auto rounded-3xl bg-white p-6 shadow-2xl ring-1 ring-slate-200 dark:bg-slate-900 dark:ring-slate-800">
         <div className="mb-3 flex items-center justify-between border-b border-slate-100 pb-2 dark:border-slate-800">
           <p className="text-xs font-bold uppercase tracking-wider text-slate-400">Koleksi Alat PDF (iLovePDF)</p>
-          <span className="text-[11px] font-semibold text-rose-600 dark:text-rose-400">100% Gratis</span>
+          <span className="text-[11px] font-semibold text-rose-600 dark:text-rose-400">100% Gratis & Cepat</span>
         </div>
         <div className="grid grid-cols-3 gap-6">
           {pdfCategories.map((cat) => {
@@ -66,12 +67,9 @@ function ImageToolsMenu() {
   const imgCategories = CATEGORIES.filter((c) => c.kind === 'image')
   return (
     <details className="group relative">
-      <summary className="flex cursor-pointer list-none items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium text-slate-700 hover:text-blue-600 dark:text-slate-300 dark:hover:text-blue-400">
+      <summary className="flex cursor-pointer list-none items-center gap-1.5 rounded-lg px-2.5 py-2 text-sm font-medium text-slate-700 hover:text-blue-600 dark:text-slate-300 dark:hover:text-blue-400">
         <ImageIcon className="size-4 text-blue-500" />
         <span>Alat Gambar</span>
-        <span className="rounded-full bg-blue-100 px-1.5 py-0.2 text-[10px] font-extrabold text-blue-700 dark:bg-blue-950 dark:text-blue-300">
-          Baru
-        </span>
         <ChevronDown className="size-3.5 text-slate-400 transition-transform group-open:rotate-180" />
       </summary>
       <div className="absolute left-0 z-40 mt-2 w-[560px] max-h-[540px] overflow-y-auto rounded-3xl bg-white p-6 shadow-2xl ring-1 ring-slate-200 dark:bg-slate-900 dark:ring-slate-800">
@@ -123,6 +121,7 @@ function ImageToolsMenu() {
 export function Layout() {
   const location = useLocation()
   const [mobileOpen, setMobileOpen] = useState(false)
+  const premium = usePremium()
 
   return (
     <div className="flex min-h-dvh flex-col">
@@ -144,12 +143,31 @@ export function Layout() {
             <NavLink to="/convert" className={navLink}>
               Konversi Bebas
             </NavLink>
+            <NavLink to="/pricing" className={navLink}>
+              Harga
+            </NavLink>
             <NavLink to="/faq" className={navLink}>
               FAQ
             </NavLink>
-            <NavLink to="/privacy" className={navLink}>
-              Privasi
-            </NavLink>
+
+            {/* Pro Status / Upgrade CTA */}
+            {premium.isPro ? (
+              <Link
+                to="/pricing"
+                className="ml-2 inline-flex items-center gap-1.5 rounded-xl bg-amber-500/10 px-3 py-1.5 text-xs font-bold text-amber-700 ring-1 ring-amber-500/30 dark:bg-amber-950/40 dark:text-amber-300 dark:ring-amber-800"
+              >
+                <Crown className="size-3.5 text-amber-600" />
+                <span>Member Pro</span>
+              </Link>
+            ) : (
+              <Link
+                to="/pricing"
+                className="ml-2 inline-flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-amber-500 via-rose-500 to-indigo-600 px-3 py-1.5 text-xs font-extrabold text-white shadow-sm hover:opacity-90 transition-opacity"
+              >
+                <Crown className="size-3.5 text-white" />
+                <span>Seumur Hidup (Rp149rb)</span>
+              </Link>
+            )}
           </nav>
           <button
             type="button"
@@ -164,6 +182,27 @@ export function Layout() {
         </div>
         {mobileOpen && (
           <nav id="mobile-nav" className="border-t border-slate-200 px-4 py-4 max-h-[80vh] overflow-y-auto md:hidden dark:border-slate-800" aria-label="Navigasi utama" onClick={() => setMobileOpen(false)}>
+            {/* Mobile Pro CTA Banner */}
+            <div className="mb-4">
+              {premium.isPro ? (
+                <div className="flex items-center justify-between rounded-xl bg-amber-500/10 p-3 text-xs font-bold text-amber-800 ring-1 ring-amber-500/20 dark:bg-amber-950/40 dark:text-amber-200">
+                  <span className="flex items-center gap-2">
+                    <Crown className="size-4 text-amber-600" /> Akun Pro Aktif ({premium.expiresAt})
+                  </span>
+                </div>
+              ) : (
+                <Link
+                  to="/pricing"
+                  className="flex items-center justify-between rounded-xl bg-gradient-to-r from-amber-500 via-rose-500 to-indigo-600 p-3 text-xs font-extrabold text-white shadow-md"
+                >
+                  <span className="flex items-center gap-2">
+                    <Crown className="size-4" /> Dapatkan Akses Seumur Hidup
+                  </span>
+                  <span className="rounded-md bg-white/20 px-2 py-0.5 text-[10px]">Rp 149.000</span>
+                </Link>
+              )}
+            </div>
+
             <div className="space-y-6">
               {/* Gambar Tools */}
               <div>
@@ -213,7 +252,10 @@ export function Layout() {
                 </div>
               </div>
             </div>
-            <div className="mt-4 flex border-t border-slate-200 pt-3 dark:border-slate-800">
+            <div className="mt-4 flex flex-wrap gap-2 border-t border-slate-200 pt-3 dark:border-slate-800">
+              <NavLink to="/pricing" className={navLink}>
+                👑 Paket & Harga
+              </NavLink>
               <NavLink to="/convert" className={navLink}>
                 Konversi Bebas
               </NavLink>
@@ -234,8 +276,11 @@ export function Layout() {
 
       <footer className="border-t border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-950">
         <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-4 px-4 py-8 text-center text-xs text-slate-500 sm:flex-row sm:text-left">
-          <p>© {YEAR} JMTools. Alat pengolah PDF dan optimasi gambar online gratis tanpa batas.</p>
-          <div className="flex gap-4">
+          <p>© {YEAR} JMTools. Alat pengolah PDF dan optimasi gambar online.</p>
+          <div className="flex flex-wrap gap-4">
+            <Link to="/pricing" className="font-bold text-amber-600 hover:underline">
+              👑 Paket Seumur Hidup
+            </Link>
             <Link to="/faq" className="hover:underline">
               FAQ
             </Link>
