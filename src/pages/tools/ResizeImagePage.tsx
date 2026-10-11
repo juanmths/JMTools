@@ -13,6 +13,7 @@ import {
 } from 'lucide-react'
 import { useState } from 'react'
 import { Alert, Button, Card } from '../../components/ui'
+import { consumeCredit } from '../../lib/authStore'
 import { formatBytes } from '../../lib/utils'
 
 export default function ResizeImagePage() {
@@ -84,6 +85,9 @@ export default function ResizeImagePage() {
 
   const resize = async () => {
     if (!file || !previewUrl || width <= 0 || height <= 0) return
+    const { allowed } = consumeCredit()
+    if (!allowed) return
+
     setProcessing(true)
     setError(undefined)
 

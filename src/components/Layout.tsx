@@ -1,9 +1,23 @@
-import { ChevronDown, Crown, FileText, Image as ImageIcon, Layers, Menu, X } from 'lucide-react'
+import {
+  ChevronDown,
+  Crown,
+  FileText,
+  Image as ImageIcon,
+  Layers,
+  LogOut,
+  Menu,
+  User as UserIcon,
+  X,
+} from 'lucide-react'
 import { useState } from 'react'
 import { Link, NavLink, Outlet, ScrollRestoration, useLocation } from 'react-router-dom'
 import { ALL_TOOLS, CATEGORIES } from '../lib/pdfTools'
+import { useAuth } from '../lib/authStore'
 import { usePremium } from '../lib/premiumStore'
 import { cn } from '../lib/utils'
+import { AuthModal } from './AuthModal'
+import { CreditsBadge } from './CreditsBadge'
+import { OutOfCreditsModal } from './OutOfCreditsModal'
 
 const YEAR = new Date().getFullYear()
 
@@ -121,13 +135,20 @@ function ImageToolsMenu() {
 export function Layout() {
   const location = useLocation()
   const [mobileOpen, setMobileOpen] = useState(false)
+  const [authModalOpen, setAuthModalOpen] = useState(false)
   const premium = usePremium()
+  const { user, isAuthenticated, logout } = useAuth()
 
   return (
     <div className="flex min-h-dvh flex-col">
       <a href="#main" className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-50 focus:rounded-lg focus:bg-white focus:px-3 focus:py-2">
         Lewati ke konten
       </a>
+
+      {/* Global Modals */}
+      <AuthModal isOpen={authModalOpen} onClose={() => setAuthModalOpen(false)} />
+      <OutOfCreditsModal />
+
       <header className="sticky top-0 z-30 border-b border-slate-200 bg-white/80 backdrop-blur dark:border-slate-800 dark:bg-slate-950/80">
         <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4">
           <Link to="/" className="flex items-center gap-2 font-bold tracking-tight text-lg">
@@ -136,8 +157,9 @@ export function Layout() {
             </span>
             JMTools
           </Link>
-          {/* key resets <details> open state on navigation */}
-          <nav key={location.pathname} className="hidden items-center gap-1 md:flex" aria-label="Navigasi utama">
+
+          {/* Desktop Navigation */}
+          <nav key={location.pathname} className="hidden items-center gap-1.5 md:flex" aria-label="Navigasi utama">
             <PdfToolsMenu />
             <ImageToolsMenu />
             <NavLink to="/convert" className={navLink}>
@@ -146,15 +168,62 @@ export function Layout() {
             <NavLink to="/pricing" className={navLink}>
               Harga
             </NavLink>
-            <NavLink to="/faq" className={navLink}>
-              FAQ
-            </NavLink>
+
+            {/* Credits Counter Badge */}
+            <CreditsBadge />
+
+            {/* User Account / Login Button */}
+            {isAuthenticated ? (
+              <details className="group relative">
+                <summary className="flex cursor-pointer list-none items-center gap-2 rounded-xl bg-slate-100 px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-200">
+                  {user?.avatar ? (
+                    <img src={user.avatar} alt={user.name} className="size-5 rounded-full object-cover" />
+                  ) : (
+                    <div className="grid size-5 place-items-center rounded-full bg-indigo-600 text-[10px] text-white">
+                      {user?.name.charAt(0).toUpperCase()}
+                    </div>
+                  )}
+                  <span className="truncate max-w-[100px]">{user?.name}</span>
+                  <ChevronDown className="size-3 text-slate-400 transition-transform group-open:rotate-180" />
+                </summary>
+                <div className="absolute right-0 z-40 mt-2 w-56 rounded-2xl bg-white p-3 shadow-xl ring-1 ring-slate-200 dark:bg-slate-900 dark:ring-slate-800 text-xs space-y-2">
+                  <div className="border-b border-slate-100 pb-2 dark:border-slate-800">
+                    <p className="font-bold text-slate-900 dark:text-white truncate">{user?.name}</p>
+                    <p className="text-[11px] text-slate-400 truncate">{user?.email}</p>
+                  </div>
+                  <Link
+                    to="/pricing"
+                    className="flex items-center gap-2 rounded-xl p-2 font-medium text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
+                  >
+                    <Crown className="size-4 text-amber-500" />
+                    <span>Status Langganan</span>
+                  </Link>
+                  <button
+                    type="button"
+                    onClick={logout}
+                    className="w-full flex items-center gap-2 rounded-xl p-2 font-medium text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 text-left"
+                  >
+                    <LogOut className="size-4" />
+                    <span>Keluar Akun</span>
+                  </button>
+                </div>
+              </details>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setAuthModalOpen(true)}
+                className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-700 hover:border-indigo-400 hover:text-indigo-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
+              >
+                <UserIcon className="size-3.5" />
+                <span>Masuk</span>
+              </button>
+            )}
 
             {/* Pro Status / Upgrade CTA */}
             {premium.isPro ? (
               <Link
                 to="/pricing"
-                className="ml-2 inline-flex items-center gap-1.5 rounded-xl bg-amber-500/10 px-3 py-1.5 text-xs font-bold text-amber-700 ring-1 ring-amber-500/30 dark:bg-amber-950/40 dark:text-amber-300 dark:ring-amber-800"
+                className="ml-1 inline-flex items-center gap-1.5 rounded-xl bg-amber-500/10 px-3 py-1.5 text-xs font-bold text-amber-700 ring-1 ring-amber-500/30 dark:bg-amber-950/40 dark:text-amber-300 dark:ring-amber-800"
               >
                 <Crown className="size-3.5 text-amber-600" />
                 <span>Member Pro</span>
@@ -162,26 +231,69 @@ export function Layout() {
             ) : (
               <Link
                 to="/pricing"
-                className="ml-2 inline-flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-amber-500 via-rose-500 to-indigo-600 px-3 py-1.5 text-xs font-extrabold text-white shadow-sm hover:opacity-90 transition-opacity"
+                className="ml-1 inline-flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-amber-500 via-rose-500 to-indigo-600 px-3.5 py-1.5 text-xs font-extrabold text-white shadow-sm hover:opacity-90 transition-opacity"
               >
                 <Crown className="size-3.5 text-white" />
                 <span>Seumur Hidup (Rp149rb)</span>
               </Link>
             )}
           </nav>
-          <button
-            type="button"
-            className="rounded-lg p-2 md:hidden"
-            onClick={() => setMobileOpen((o) => !o)}
-            aria-expanded={mobileOpen}
-            aria-controls="mobile-nav"
-            aria-label="Menu"
-          >
-            {mobileOpen ? <X className="size-5" /> : <Menu className="size-5" />}
-          </button>
+
+          {/* Mobile Right Controls */}
+          <div className="flex items-center gap-2 md:hidden">
+            <CreditsBadge />
+            <button
+              type="button"
+              className="rounded-lg p-2 text-slate-700 dark:text-slate-200"
+              onClick={() => setMobileOpen((o) => !o)}
+              aria-expanded={mobileOpen}
+              aria-controls="mobile-nav"
+              aria-label="Menu"
+            >
+              {mobileOpen ? <X className="size-5" /> : <Menu className="size-5" />}
+            </button>
+          </div>
         </div>
+
+        {/* Mobile Navigation Drawer */}
         {mobileOpen && (
-          <nav id="mobile-nav" className="border-t border-slate-200 px-4 py-4 max-h-[80vh] overflow-y-auto md:hidden dark:border-slate-800" aria-label="Navigasi utama" onClick={() => setMobileOpen(false)}>
+          <nav id="mobile-nav" className="border-t border-slate-200 px-4 py-4 max-h-[85vh] overflow-y-auto md:hidden dark:border-slate-800" aria-label="Navigasi utama" onClick={() => setMobileOpen(false)}>
+            {/* User Session Bar */}
+            <div className="mb-4">
+              {isAuthenticated ? (
+                <div className="flex items-center justify-between rounded-2xl bg-slate-100 p-3 text-xs dark:bg-slate-800">
+                  <div className="flex items-center gap-2.5">
+                    {user?.avatar ? (
+                      <img src={user.avatar} alt={user.name} className="size-7 rounded-full object-cover" />
+                    ) : (
+                      <div className="grid size-7 place-items-center rounded-full bg-indigo-600 text-xs text-white font-bold">
+                        {user?.name.charAt(0).toUpperCase()}
+                      </div>
+                    )}
+                    <div>
+                      <p className="font-bold text-slate-900 dark:text-white">{user?.name}</p>
+                      <p className="text-[10px] text-slate-500">{user?.email}</p>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={logout}
+                    className="text-rose-600 text-xs font-bold hover:underline"
+                  >
+                    Keluar
+                  </button>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setAuthModalOpen(true)}
+                  className="w-full flex items-center justify-center gap-2 rounded-xl bg-slate-900 py-2.5 text-xs font-bold text-white shadow-sm dark:bg-white dark:text-slate-900"
+                >
+                  <UserIcon className="size-4" /> Masuk / Daftar Akun (5 Kredit Gratis)
+                </button>
+              )}
+            </div>
+
             {/* Mobile Pro CTA Banner */}
             <div className="mb-4">
               {premium.isPro ? (
@@ -252,6 +364,7 @@ export function Layout() {
                 </div>
               </div>
             </div>
+
             <div className="mt-4 flex flex-wrap gap-2 border-t border-slate-200 pt-3 dark:border-slate-800">
               <NavLink to="/pricing" className={navLink}>
                 👑 Paket & Harga

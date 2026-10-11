@@ -2,6 +2,7 @@ import { ArrowDown, ArrowUp, Check, Download, FileText, Layers, Loader2, Plus, R
 import { PDFDocument } from 'pdf-lib'
 import { useCallback, useState } from 'react'
 import { Alert, Button, Card } from '../../components/ui'
+import { consumeCredit } from '../../lib/authStore'
 import { formatBytes } from '../../lib/utils'
 
 interface PdfItem {
@@ -64,6 +65,9 @@ export default function MergePdfPage() {
       setError('Pilih minimal 2 berkas PDF untuk digabungkan.')
       return
     }
+
+    const { allowed } = consumeCredit()
+    if (!allowed) return
 
     setProcessing(true)
     setError(undefined)

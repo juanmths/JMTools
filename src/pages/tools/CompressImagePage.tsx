@@ -12,6 +12,7 @@ import {
 } from 'lucide-react'
 import { useState } from 'react'
 import { Alert, Button, Card } from '../../components/ui'
+import { consumeCredit } from '../../lib/authStore'
 import { formatBytes } from '../../lib/utils'
 
 export default function CompressImagePage() {
@@ -60,6 +61,9 @@ export default function CompressImagePage() {
 
   const compress = async () => {
     if (!file || !previewUrl) return
+    const { allowed } = consumeCredit()
+    if (!allowed) return
+
     setProcessing(true)
     setError(undefined)
 

@@ -15,6 +15,7 @@
 import { detectFormat } from '../../lib/fileType'
 import { encodeImage } from '../../lib/imageEncode'
 import { FILE_TTL_MS, FORMATS, isPdfCompress, MAX_FILE_SIZE, TARGETS, type FormatId } from '../../lib/formats'
+import { consumeCredit } from '../../lib/authStore'
 import { formatBytes } from '../../lib/utils'
 import type { ConvertRequest, ImageSettings, Job, PdfSettings, UploadedFile } from './types'
 
@@ -231,6 +232,9 @@ export const api = {
   },
 
   async convert(req: ConvertRequest): Promise<{ jobId: string }> {
+    const { allowed } = consumeCredit()
+    if (!allowed) throw new Error('Kredit gratis Anda telah habis (5/5). Silakan pilih paket langganan untuk melanjutkan.')
+
     const source = files.get(req.fileId)
     if (!source) throw new Error('Berkas asli sudah dihapus dari server. Silakan unggah ulang.')
     if (!TARGETS[source.meta.type].includes(req.target)) throw new Error('Format target tidak valid.')
