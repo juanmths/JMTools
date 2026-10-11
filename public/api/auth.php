@@ -287,10 +287,16 @@ switch ($action) {
             $up = $db->prepare("UPDATE users SET is_pro = 1, plan = ?, license_key = ? WHERE id = ?");
             $up->execute([$plan, $licenseKey, $userId]);
 
+            // Ambil email user jika ada
+            $uStmt = $db->prepare("SELECT email, name, phone FROM users WHERE id = ? LIMIT 1");
+            $uStmt->execute([$userId]);
+            $uData = $uStmt->fetch();
+
             // Catat ke tabel transaksi
-            $insTx = $db->prepare("INSERT INTO transactions (user_id, plan, payment_method, amount, license_key, status, created_at) VALUES (?, ?, 'Online Payment', ?, ?, 'paid', NOW())");
+            $orderId = 'JMT-' . date('ymd') . '-' . strtoupper(bin2hex(random_bytes(3)));
             $amount = ($plan === 'monthly') ? 19000 : (($plan === 'yearly') ? 89000 : 149000);
-            $insTx->execute([$userId, $plan, $amount, $licenseKey]);
+            $insTx = $db->prepare("INSERT INTO transactions (id, user_id, user_name, user_email, user_phone, plan, payment_method, amount, license_key, status, paid_at, created_at) VALUES (?, ?, ?, ?, ?, ?, 'Online Payment', ?, ?, 'paid', NOW(), NOW())");
+            $insTx->execute([$orderId, $userId, $uData['name'] ?? null, $uData['email'] ?? '', $uData['phone'] ?? null, $plan, $amount, $licenseKey]);
         }
         echo json_encode(['status' => 'success', 'license_key' => $licenseKey]);
         break;
@@ -311,7 +317,7 @@ switch ($action) {
         $users = $stmtUsers->fetchAll();
 
         // Ambil data transaksi
-        $stmtTx = $db->query("SELECT t.*, u.name as user_name, u.email as user_email FROM transactions t LEFT JOIN users u ON t.user_id = u.id ORDER BY t.created_at DESC LIMIT 200");
+        $stmtTx = $db->query("SELECT t.*, COALESCE(t.user_name, u.name, 'Pelanggan') as user_name, COALESCE(t.user_email, u.email, '-') as user_email FROM transactions t LEFT JOIN users u ON t.user_id = u.id ORDER BY t.created_at DESC LIMIT 200");
         $transactions = $stmtTx->fetchAll();
 
         // Hitung statistik
@@ -355,7 +361,7 @@ switch ($action) {
 
         if ($targetEmail) {
             // Aktifkan langsung ke user terkait
-            $stmt = $db->prepare("SELECT id FROM users WHERE email = ? LIMIT 1");
+            $stmt = $db->prepare("SELECT id, name, phone FROM users WHERE email = ? LIMIT 1");
             $stmt->execute([$targetEmail]);
             $user = $stmt->fetch();
 
@@ -364,9 +370,10 @@ switch ($action) {
                 $up->execute([$plan, $licenseKey, $user['id']]);
 
                 // Catat transaksi
+                $orderId = 'JMT-ADM-' . date('ymd') . '-' . strtoupper(bin2hex(random_bytes(3)));
                 $amount = ($plan === 'monthly') ? 19000 : (($plan === 'yearly') ? 89000 : 149000);
-                $insTx = $db->prepare("INSERT INTO transactions (user_id, plan, payment_method, amount, license_key, status, created_at) VALUES (?, ?, 'Admin Manual Activation', ?, ?, 'paid', NOW())");
-                $insTx->execute([$user['id'], $plan, $amount, $licenseKey]);
+                $insTx = $db->prepare("INSERT INTO transactions (id, user_id, user_name, user_email, user_phone, plan, payment_method, amount, license_key, status, paid_at, created_at) VALUES (?, ?, ?, ?, ?, ?, 'Admin Manual Activation', ?, ?, 'paid', NOW(), NOW())");
+                $insTx->execute([$orderId, $user['id'], $user['name'], $targetEmail, $user['phone'] ?? null, $plan, $amount, $licenseKey]);
             }
         }
 

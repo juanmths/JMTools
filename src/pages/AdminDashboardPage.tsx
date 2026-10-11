@@ -9,6 +9,7 @@ import {
   KeyRound,
   Loader2,
   Lock,
+  MessageCircle,
   Plus,
   RefreshCw,
   Search,
@@ -16,6 +17,7 @@ import {
   Sparkles,
   UserCheck,
   Users,
+  Zap,
 } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
@@ -44,6 +46,7 @@ interface AdminTransaction {
   user_id?: string
   user_name?: string
   user_email?: string
+  user_phone?: string
   plan: string
   payment_method: string
   amount: number
@@ -82,6 +85,11 @@ export default function AdminDashboardPage() {
   const [genLoading, setGenLoading] = useState(false)
   const [copiedKey, setCopiedKey] = useState(false)
   const [copiedWaMsg, setCopiedWaMsg] = useState(false)
+
+  // WA Resend & Tx Verification State
+  const [waSendingId, setWaSendingId] = useState<string | number | null>(null)
+  const [waSentSuccess, setWaSentSuccess] = useState<string | number | null>(null)
+  const [verifyingTxId, setVerifyingTxId] = useState<string | number | null>(null)
 
   // Active Tab: 'users' | 'licenses' | 'transactions'
   const [activeTab, setActiveTab] = useState<'users' | 'licenses' | 'transactions'>('users')
@@ -275,6 +283,63 @@ export default function AdminDashboardPage() {
     } else {
       setCopiedWaMsg(true)
       setTimeout(() => setCopiedWaMsg(false), 2000)
+    }
+  }
+
+  // Kirim ulang lisensi ke WA via Bot Otomatis
+  const handleResendWa = async (tx: AdminTransaction) => {
+    setWaSendingId(tx.id)
+    try {
+      const res = await fetch('/api/payment.php?action=admin_resend_wa', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          admin_email: ADMIN_EMAIL,
+          order_id: tx.id,
+          phone: tx.user_phone,
+        }),
+      })
+      const data = await res.json()
+      if (data.status === 'success') {
+        setWaSentSuccess(tx.id)
+        setTimeout(() => setWaSentSuccess(null), 3000)
+      } else {
+        // Fallback langsung buka link WhatsApp web
+        const msg = encodeURIComponent(
+          `Halo Kak ${tx.user_name || 'Pelanggan'}! Terima kasih banyak sudah memesan JMTools Pro.\n\nBerikut adalah Kode Lisensi Resmi Anda:\n🔑 ${tx.license_key}\n\nCara Aktivasi:\n1. Buka https://tools.sarjanait.com/pricing\n2. Masukkan kode di atas.\n\nSalam,\nJuan Karly Matheus - Founder JMTools`
+        )
+        const targetNumber = tx.user_phone ? tx.user_phone.replace(/^0/, '62') : '6282399585050'
+        window.open(`https://wa.me/${targetNumber}?text=${msg}`, '_blank')
+      }
+    } catch {
+      const msg = encodeURIComponent(
+        `Halo Kak ${tx.user_name || 'Pelanggan'}! Terima kasih banyak sudah memesan JMTools Pro.\n\nBerikut adalah Kode Lisensi Resmi Anda:\n🔑 ${tx.license_key}\n\nCara Aktivasi:\n1. Buka https://tools.sarjanait.com/pricing\n2. Masukkan kode di atas.\n\nSalam,\nJuan Karly Matheus - Founder JMTools`
+      )
+      const targetNumber = tx.user_phone ? tx.user_phone.replace(/^0/, '62') : '6282399585050'
+      window.open(`https://wa.me/${targetNumber}?text=${msg}`, '_blank')
+    } finally {
+      setWaSendingId(null)
+    }
+  }
+
+  // Verifikasi instan dari admin
+  const handleInstantVerifyTx = async (tx: AdminTransaction) => {
+    setVerifyingTxId(tx.id)
+    try {
+      await fetch('/api/payment.php?action=verify_instant', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          order_id: tx.id,
+          plan: tx.plan,
+          payment_method: tx.payment_method,
+        }),
+      })
+      fetchAdminData()
+    } catch {
+      fetchAdminData()
+    } finally {
+      setVerifyingTxId(null)
     }
   }
 
@@ -741,10 +806,53 @@ export default function AdminDashboardPage() {
       )}
 
       {/* ============================================================ */}
-      {/* TAB 3: RIWAYAT TRANSAKSI                                     */}
+      {/* TAB 3: RIWAYAT TRANSAKSI & STATUS OTOMASI                    */}
       {/* ============================================================ */}
       {activeTab === 'transactions' && (
-        <div className="space-y-4">
+        <div className="space-y-6">
+          {/* Automation & Webhook Engine Status Card */}
+          <div className="rounded-3xl border border-indigo-200 bg-gradient-to-r from-indigo-50/80 via-white to-purple-50/80 p-5 dark:border-indigo-900 dark:from-indigo-950/40 dark:to-purple-950/40 space-y-3">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <div className="grid size-10 place-items-center rounded-2xl bg-indigo-600 text-white shadow-md">
+                  <Zap className="size-5" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-sm text-slate-900 dark:text-white flex items-center gap-2">
+                    Mesin Otomatisasi Pembayaran & Bot WhatsApp Aktif
+                  </h3>
+                  <p className="text-[11px] text-slate-500">
+                    Sistem mendeteksi pembayaran masuk secara real-time 24 jam nonstop tanpa perlu konfirmasi manual.
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-100 px-3 py-1 text-[11px] font-bold text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">
+                  <span className="size-2 rounded-full bg-emerald-500 animate-pulse"></span> Webhook Siap
+                </span>
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-blue-100 px-3 py-1 text-[11px] font-bold text-blue-800 dark:bg-blue-950 dark:text-blue-300">
+                  <MessageCircle className="size-3" /> Bot WA Terintegrasi
+                </span>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs pt-1 border-t border-indigo-100 dark:border-indigo-900/60 text-slate-600 dark:text-slate-300">
+              <div className="rounded-xl bg-white/80 p-3 ring-1 ring-slate-200/70 dark:bg-slate-900/80 dark:ring-slate-800">
+                <p className="font-bold text-slate-800 dark:text-slate-200">🔗 URL Webhook Tripay Anda:</p>
+                <code className="text-[11px] text-indigo-600 dark:text-indigo-400 font-mono select-all block mt-1 break-all">
+                  https://tools.sarjanait.com/api/payment.php?action=tripay_webhook
+                </code>
+              </div>
+              <div className="rounded-xl bg-white/80 p-3 ring-1 ring-slate-200/70 dark:bg-slate-900/80 dark:ring-slate-800">
+                <p className="font-bold text-slate-800 dark:text-slate-200">📱 Pengaturan Bot WhatsApp:</p>
+                <p className="text-[11px] text-slate-500 mt-1">
+                  Atur Token Fonnte di <code className="font-mono text-slate-700 dark:text-slate-300">public/api/payment_config.php</code> untuk auto-send pesan instan.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Transactions Data Table */}
           <div className="overflow-x-auto rounded-3xl bg-white shadow-sm ring-1 ring-slate-200 dark:bg-slate-900 dark:ring-slate-800">
             <table className="w-full text-left text-xs">
               <thead>
@@ -756,12 +864,13 @@ export default function AdminDashboardPage() {
                   <th className="p-4 font-bold text-slate-900 dark:text-white text-right">Nominal</th>
                   <th className="p-4 font-bold text-slate-900 dark:text-white text-center">Kode Lisensi</th>
                   <th className="p-4 font-bold text-slate-900 dark:text-white text-center">Status</th>
+                  <th className="p-4 font-bold text-slate-900 dark:text-white text-center">Aksi Bot & WA</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                 {transactions.length === 0 ? (
                   <tr>
-                    <td colSpan={7} className="p-8 text-center text-slate-400">
+                    <td colSpan={8} className="p-8 text-center text-slate-400">
                       Belum ada transaksi tercatat.
                     </td>
                   </tr>
@@ -775,6 +884,9 @@ export default function AdminDashboardPage() {
                       <td className="p-4">
                         <p className="font-bold text-slate-900 dark:text-white">{tx.user_name || 'Pembeli Langsung'}</p>
                         <p className="text-[10px] text-slate-400">{tx.user_email || '-'}</p>
+                        {tx.user_phone && (
+                          <p className="text-[10px] text-emerald-600 font-mono">{tx.user_phone}</p>
+                        )}
                       </td>
                       <td className="p-4 font-bold uppercase text-indigo-600 dark:text-indigo-400">
                         {tx.plan}
@@ -787,13 +899,56 @@ export default function AdminDashboardPage() {
                       </td>
                       <td className="p-4 text-center font-mono text-xs">
                         <span className="rounded bg-slate-100 px-2 py-0.5 text-slate-700 dark:bg-slate-800 dark:text-slate-300">
-                          {tx.license_key}
+                          {tx.license_key || '-'}
                         </span>
                       </td>
                       <td className="p-4 text-center">
-                        <span className="rounded-full bg-emerald-100 px-2.5 py-0.5 text-[10px] font-extrabold text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">
-                          LUNAS
-                        </span>
+                        {tx.status === 'paid' ? (
+                          <span className="rounded-full bg-emerald-100 px-2.5 py-0.5 text-[10px] font-extrabold text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">
+                            LUNAS
+                          </span>
+                        ) : (
+                          <span className="rounded-full bg-amber-100 px-2.5 py-0.5 text-[10px] font-extrabold text-amber-800 dark:bg-amber-950 dark:text-amber-300">
+                            MENUNGGU
+                          </span>
+                        )}
+                      </td>
+                      <td className="p-4 text-center">
+                        <div className="flex items-center justify-center gap-1.5">
+                          {tx.status === 'paid' ? (
+                            <Button
+                              variant="secondary"
+                              size="md"
+                              className="text-[11px] py-1 px-2.5 flex items-center gap-1"
+                              onClick={() => handleResendWa(tx)}
+                              disabled={waSendingId === tx.id}
+                            >
+                              {waSendingId === tx.id ? (
+                                <Loader2 className="size-3 animate-spin" />
+                              ) : waSentSuccess === tx.id ? (
+                                <Check className="size-3 text-emerald-600" />
+                              ) : (
+                                <MessageCircle className="size-3 text-emerald-600" />
+                              )}
+                              <span>{waSentSuccess === tx.id ? 'Terkirim!' : 'Kirim WA'}</span>
+                            </Button>
+                          ) : (
+                            <Button
+                              variant="primary"
+                              size="md"
+                              className="text-[11px] py-1 px-2.5 bg-emerald-600 hover:bg-emerald-500 font-bold"
+                              onClick={() => handleInstantVerifyTx(tx)}
+                              disabled={verifyingTxId === tx.id}
+                            >
+                              {verifyingTxId === tx.id ? (
+                                <Loader2 className="size-3 animate-spin" />
+                              ) : (
+                                <Check className="size-3" />
+                              )}
+                              <span>Verifikasi</span>
+                            </Button>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   ))

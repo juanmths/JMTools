@@ -1,11 +1,14 @@
 -- ========================================================
--- SKEMA DATABASE MYSQL UNTUK JMTOOLS (HOSTINGER)
+-- SKEMA DATABASE MYSQL RESMI UNTUK JMTOOLS (HOSTINGER)
 -- ========================================================
--- Cara menggunakan:
--- 1. Buka hPanel Hostinger > Manajemen Database MySQL.
--- 2. Buat database baru (contoh: u123456789_jmtools).
--- 3. Buka phpMyAdmin > Pilih database Anda > Klik menu "Import".
--- 4. Pilih file db.sql ini dan klik "Go" / "Kirim".
+-- Pemilik: JUAN KARLY MATHEUS
+-- Database Name: u810020080_jmtools
+-- 
+-- Cara Menggunakan di Hostinger:
+-- 1. Buka hPanel Hostinger > Databases > phpMyAdmin.
+-- 2. Pilih database u810020080_jmtools.
+-- 3. Klik tab "SQL" atau "Import".
+-- 4. Tempel skrip ini dan klik "Go" / "Kirim".
 -- ========================================================
 
 CREATE TABLE IF NOT EXISTS `users` (
@@ -28,14 +31,23 @@ CREATE TABLE IF NOT EXISTS `users` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS `transactions` (
-  `id` VARCHAR(50) NOT NULL PRIMARY KEY,
+  `id` VARCHAR(60) NOT NULL PRIMARY KEY,
+  `user_id` VARCHAR(50) NULL,
+  `user_name` VARCHAR(100) NULL,
   `user_email` VARCHAR(150) NOT NULL,
-  `plan_id` VARCHAR(50) NOT NULL,
+  `user_phone` VARCHAR(30) NULL,
+  `plan` VARCHAR(50) NOT NULL,
   `amount` DECIMAL(12,2) NOT NULL,
+  `unique_code` INT DEFAULT 0,
   `payment_method` VARCHAR(50) NOT NULL,
-  `status` ENUM('pending', 'paid', 'failed') DEFAULT 'pending',
-  `proof_image` VARCHAR(255) NULL,
+  `payment_reference` VARCHAR(100) NULL,
+  `qr_url` TEXT NULL,
+  `pay_code` VARCHAR(100) NULL,
+  `license_key` VARCHAR(100) NULL,
+  `status` ENUM('pending', 'paid', 'expired', 'failed') DEFAULT 'pending',
+  `paid_at` DATETIME NULL,
   `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
   INDEX `idx_user_email` (`user_email`),
-  INDEX `idx_status` (`status`)
+  INDEX `idx_status` (`status`),
+  INDEX `idx_ref` (`payment_reference`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

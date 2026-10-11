@@ -1,8 +1,6 @@
 /**
- * KONFIGURASI REKENING & PEMBAYARAN PEMILIK WEBSITE (JMTools)
- *
- * Ganti data di bawah ini dengan data rekening Bank, nomor WhatsApp,
- * dan link/gambar QRIS milik Anda sendiri agar uang pembayaran langsung masuk ke kantong Anda!
+ * KONFIGURASI REKENING, PAYMENT GATEWAY & BOT WHATSAPP JMTOOLS
+ * Pemilik: Juan Karly Matheus
  */
 
 export interface PaymentConfig {
@@ -10,34 +8,33 @@ export interface PaymentConfig {
   whatsappNumber: string // Format internasional: 628xxx (tanpa + atau 0 di depan)
   whatsappWelcomeText: string
 
-  // QRIS Pribadi / Merchant Anda (dari GoBiz, BCA Merchant, DANA Bisnis, dll)
+  // QRIS Statis Juan Karly Matheus
   qris: {
     enabled: boolean
     merchantName: string
     nmid: string
-    // Bisa berupa link gambar QRIS Anda atau letakkan file di folder public/qris-saya.png
     imageUrl: string
   }
 
-  // Rekening Bank Pribadi Anda
+  // Rekening Bank Pribadi
   bankAccounts: {
     bankName: string
     accountNumber: string
     accountHolder: string
   }[]
 
-  // Dompet Digital / E-Wallet Anda
+  // Dompet Digital / E-Wallet
   ewallets: {
     name: string
     phoneNumber: string
     accountHolder: string
   }[]
 
-  // Pengaturan Payment Gateway Otomatis (Opsional jika memakai Midtrans/Mayar)
-  gateway: {
-    provider: 'manual' | 'midtrans' | 'mayar'
-    midtransClientKey?: string
-    mayarApiKey?: string
+  // Otomatisasi & Polling Gateway
+  automation: {
+    autoPollingEnabled: boolean
+    pollingIntervalMs: number
+    autoWaReceipt: boolean
   }
 }
 
@@ -84,7 +81,9 @@ export const PAYMENT_CONFIG: PaymentConfig = {
     },
   ],
 
-  gateway: {
-    provider: 'manual', // Ubah ke 'midtrans' atau 'mayar' jika sudah mendaftar
+  automation: {
+    autoPollingEnabled: true,
+    pollingIntervalMs: 3000, // Cek status tiap 3 detik
+    autoWaReceipt: true, // Kirim struk otomatis via Bot WhatsApp ke pembeli
   },
 }
