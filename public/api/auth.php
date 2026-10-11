@@ -70,9 +70,9 @@ checkRateLimit(30, 60);
 // 2. KONFIGURASI DATABASE HOSTINGER ANDA:
 // ============================================================
 $DB_HOST = 'localhost';
-$DB_NAME = 'u123456789_jmtools';     // Ganti dengan nama database Anda di Hostinger
-$DB_USER = 'u123456789_root';        // Ganti dengan username database Anda
-$DB_PASS = 'PasswordDatabaseAnda123'; // Ganti dengan password database Anda
+$DB_NAME = 'u810020080_jmtools';
+$DB_USER = 'u810020080_jmtools';
+$DB_PASS = 'edk;Unrf:U2';
 
 function getDB() {
     global $DB_HOST, $DB_NAME, $DB_USER, $DB_PASS;
