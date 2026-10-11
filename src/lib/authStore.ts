@@ -80,12 +80,12 @@ export function triggerOutOfCreditsModal(): void {
   window.dispatchEvent(new Event(OUT_OF_CREDITS_EVENT))
 }
 
-export function loginWithGoogle(): User {
+export function loginWithGoogle(profile?: { id?: string; name?: string; email?: string; avatar?: string }): User {
   const user: User = {
-    id: `g_${Date.now()}`,
-    name: 'Pengguna Google',
-    email: 'user.google@gmail.com',
-    avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&h=100&fit=crop&crop=faces',
+    id: profile?.id || `g_${Date.now()}`,
+    name: profile?.name || 'Pengguna Google',
+    email: profile?.email || 'user.google@gmail.com',
+    avatar: profile?.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&h=100&fit=crop&crop=faces',
     provider: 'google',
     createdAt: new Date().toISOString(),
   }
