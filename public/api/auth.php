@@ -286,8 +286,141 @@ switch ($action) {
         if ($userId) {
             $up = $db->prepare("UPDATE users SET is_pro = 1, plan = ?, license_key = ? WHERE id = ?");
             $up->execute([$plan, $licenseKey, $userId]);
+
+            // Catat ke tabel transaksi
+            $insTx = $db->prepare("INSERT INTO transactions (user_id, plan, payment_method, amount, license_key, status, created_at) VALUES (?, ?, 'Online Payment', ?, ?, 'paid', NOW())");
+            $amount = ($plan === 'monthly') ? 19000 : (($plan === 'yearly') ? 89000 : 149000);
+            $insTx->execute([$userId, $plan, $amount, $licenseKey]);
         }
         echo json_encode(['status' => 'success', 'license_key' => $licenseKey]);
+        break;
+
+    // ============================================================
+    // ENDPOINT KHUSUS ADMIN (JUAN KARLY MATHEUS)
+    // ============================================================
+    case 'admin_get_data':
+        $adminEmail = strtolower(trim($input['admin_email'] ?? ''));
+        if ($adminEmail !== 'juankarlymatheus@gmail.com') {
+            http_response_code(403);
+            echo json_encode(['error' => 'Akses ditolak. Dashboard hanya untuk pemilik akun juankarlymatheus@gmail.com.']);
+            exit;
+        }
+
+        // Ambil data users
+        $stmtUsers = $db->query("SELECT id, name, email, phone, avatar, provider, credits, is_pro, plan, license_key, created_at FROM users ORDER BY created_at DESC LIMIT 500");
+        $users = $stmtUsers->fetchAll();
+
+        // Ambil data transaksi
+        $stmtTx = $db->query("SELECT t.*, u.name as user_name, u.email as user_email FROM transactions t LEFT JOIN users u ON t.user_id = u.id ORDER BY t.created_at DESC LIMIT 200");
+        $transactions = $stmtTx->fetchAll();
+
+        // Hitung statistik
+        $totalUsers = count($users);
+        $totalPro = 0;
+        $totalRevenue = 0;
+        foreach ($users as $u) {
+            if ($u['is_pro']) $totalPro++;
+        }
+        foreach ($transactions as $tx) {
+            $totalRevenue += (float)($tx['amount'] ?? 0);
+        }
+
+        echo json_encode([
+            'status' => 'success',
+            'stats' => [
+                'total_users' => $totalUsers,
+                'total_pro' => $totalPro,
+                'total_free' => max(0, $totalUsers - $totalPro),
+                'total_revenue' => $totalRevenue ?: ($totalPro * 149000), // estimasi jika manual
+                'updated_at' => date('Y-m-d H:i:s')
+            ],
+            'users' => $users,
+            'transactions' => $transactions
+        ]);
+        break;
+
+    case 'admin_generate_license':
+        $adminEmail = strtolower(trim($input['admin_email'] ?? ''));
+        if ($adminEmail !== 'juankarlymatheus@gmail.com') {
+            http_response_code(403);
+            echo json_encode(['error' => 'Akses ditolak.']);
+            exit;
+        }
+
+        $plan = cleanString($input['plan'] ?? 'lifetime', 30);
+        $targetEmail = strtolower(trim($input['target_email'] ?? ''));
+        $randomHex = strtoupper(bin2hex(random_bytes(3)));
+        $randomTime = strtoupper(substr(dechex(time()), -4));
+        $licenseKey = "JMT-" . strtoupper($plan) . "-{$randomHex}-{$randomTime}";
+
+        if ($targetEmail) {
+            // Aktifkan langsung ke user terkait
+            $stmt = $db->prepare("SELECT id FROM users WHERE email = ? LIMIT 1");
+            $stmt->execute([$targetEmail]);
+            $user = $stmt->fetch();
+
+            if ($user) {
+                $up = $db->prepare("UPDATE users SET is_pro = 1, plan = ?, license_key = ? WHERE id = ?");
+                $up->execute([$plan, $licenseKey, $user['id']]);
+
+                // Catat transaksi
+                $amount = ($plan === 'monthly') ? 19000 : (($plan === 'yearly') ? 89000 : 149000);
+                $insTx = $db->prepare("INSERT INTO transactions (user_id, plan, payment_method, amount, license_key, status, created_at) VALUES (?, ?, 'Admin Manual Activation', ?, ?, 'paid', NOW())");
+                $insTx->execute([$user['id'], $plan, $amount, $licenseKey]);
+            }
+        }
+
+        echo json_encode([
+            'status' => 'success',
+            'license_key' => $licenseKey,
+            'plan' => $plan,
+            'target_email' => $targetEmail
+        ]);
+        break;
+
+    case 'admin_toggle_pro':
+        $adminEmail = strtolower(trim($input['admin_email'] ?? ''));
+        if ($adminEmail !== 'juankarlymatheus@gmail.com') {
+            http_response_code(403);
+            echo json_encode(['error' => 'Akses ditolak.']);
+            exit;
+        }
+
+        $userId = cleanString($input['user_id'] ?? '', 50);
+        $isPro = !empty($input['is_pro']) ? 1 : 0;
+        $plan = cleanString($input['plan'] ?? 'lifetime', 30);
+        $licenseKey = $isPro ? ("JMT-LIFETIME-" . strtoupper(bin2hex(random_bytes(4)))) : null;
+
+        $up = $db->prepare("UPDATE users SET is_pro = ?, plan = ?, license_key = ? WHERE id = ?");
+        $up->execute([$isPro, $isPro ? $plan : null, $licenseKey, $userId]);
+
+        echo json_encode([
+            'status' => 'success',
+            'user_id' => $userId,
+            'is_pro' => (bool)$isPro,
+            'license_key' => $licenseKey
+        ]);
+        break;
+
+    case 'admin_update_credits':
+        $adminEmail = strtolower(trim($input['admin_email'] ?? ''));
+        if ($adminEmail !== 'juankarlymatheus@gmail.com') {
+            http_response_code(403);
+            echo json_encode(['error' => 'Akses ditolak.']);
+            exit;
+        }
+
+        $userId = cleanString($input['user_id'] ?? '', 50);
+        $credits = (int)($input['credits'] ?? 5);
+
+        $up = $db->prepare("UPDATE users SET credits = ? WHERE id = ?");
+        $up->execute([$credits, $userId]);
+
+        echo json_encode([
+            'status' => 'success',
+            'user_id' => $userId,
+            'credits' => $credits
+        ]);
         break;
 
     default:

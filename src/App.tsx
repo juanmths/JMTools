@@ -1,5 +1,6 @@
 import { createBrowserRouter, RouterProvider } from 'react-router-dom'
 import { Layout } from './components/Layout'
+import AdminDashboardPage from './pages/AdminDashboardPage'
 import CheckoutPage from './pages/CheckoutPage'
 import ConvertPage from './pages/ConvertPage'
 import HomePage from './pages/HomePage'
@@ -61,6 +62,7 @@ const router = createBrowserRouter([
       { path: '/terms', element: <TermsPage /> },
       { path: '/refund', element: <RefundPage /> },
       { path: '/contact', element: <ContactPage /> },
+      { path: '/admin', element: <AdminDashboardPage /> },
       { path: '*', element: <NotFoundPage /> },
     ],
   },

@@ -172,6 +172,15 @@ export function Layout() {
             <NavLink to="/pricing" className={navLink}>
               Harga
             </NavLink>
+            {user?.email?.toLowerCase() === 'juankarlymatheus@gmail.com' && (
+              <NavLink
+                to="/admin"
+                className="rounded-xl bg-amber-500/10 px-3 py-1.5 text-xs font-extrabold text-amber-700 ring-1 ring-amber-500/30 dark:bg-amber-950/40 dark:text-amber-300 dark:ring-amber-800 flex items-center gap-1.5"
+              >
+                <Crown className="size-3.5 text-amber-600" />
+                <span>Admin</span>
+              </NavLink>
+            )}
 
             {/* Credits Counter Badge */}
             <CreditsBadge />
@@ -195,6 +204,15 @@ export function Layout() {
                     <p className="font-bold text-slate-900 dark:text-white truncate">{user?.name}</p>
                     <p className="text-[11px] text-slate-400 truncate">{user?.email}</p>
                   </div>
+                  {user?.email?.toLowerCase() === 'juankarlymatheus@gmail.com' && (
+                    <Link
+                      to="/admin"
+                      className="flex items-center gap-2 rounded-xl p-2 font-bold text-amber-700 bg-amber-50 hover:bg-amber-100 dark:bg-amber-950/50 dark:text-amber-300 dark:hover:bg-amber-900/50"
+                    >
+                      <Crown className="size-4 text-amber-500" />
+                      <span>👑 Dashboard Admin</span>
+                    </Link>
+                  )}
                   <Link
                     to="/pricing"
                     className="flex items-center gap-2 rounded-xl p-2 font-medium text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
@@ -297,6 +315,21 @@ export function Layout() {
                 </button>
               )}
             </div>
+
+            {/* Mobile Admin Link if logged in as Juan */}
+            {user?.email?.toLowerCase() === 'juankarlymatheus@gmail.com' && (
+              <div className="mb-3">
+                <Link
+                  to="/admin"
+                  className="flex items-center justify-between rounded-xl bg-amber-500/15 p-3 text-xs font-extrabold text-amber-800 dark:text-amber-200 ring-1 ring-amber-500/30"
+                >
+                  <span className="flex items-center gap-2">
+                    <Crown className="size-4 text-amber-600" /> Dashboard Khusus Admin
+                  </span>
+                  <span>Buka →</span>
+                </Link>
+              </div>
+            )}
 
             {/* Mobile Pro CTA Banner */}
             <div className="mb-4">
