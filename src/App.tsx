@@ -6,6 +6,14 @@ import { FaqPage, PrivacyPage } from './pages/InfoPages'
 import NotFoundPage from './pages/NotFoundPage'
 import ResultPage from './pages/ResultPage'
 import ToolLandingPage from './pages/ToolLandingPage'
+import CompressImagePage from './pages/tools/CompressImagePage'
+import ConvertImagePage from './pages/tools/ConvertImagePage'
+import CropImagePage from './pages/tools/CropImagePage'
+import EditImagePage from './pages/tools/EditImagePage'
+import MemeGeneratorPage from './pages/tools/MemeGeneratorPage'
+import ResizeImagePage from './pages/tools/ResizeImagePage'
+import RotateImagePage from './pages/tools/RotateImagePage'
+import WatermarkImagePage from './pages/tools/WatermarkImagePage'
 import AddWatermarkPage from './pages/tools/AddWatermarkPage'
 import EditPdfPage from './pages/tools/EditPdfPage'
 import MergePdfPage from './pages/tools/MergePdfPage'
@@ -22,7 +30,16 @@ const router = createBrowserRouter([
       { path: '/', element: <HomePage /> },
       { path: '/convert', element: <ConvertPage /> },
       { path: '/convert/result/:jobId', element: <ResultPage /> },
-      // Dedicated interactive PDF tools
+      // Dedicated interactive Image tools (iLoveIMG style)
+      { path: '/tools/compress-image', element: <CompressImagePage /> },
+      { path: '/tools/resize-image', element: <ResizeImagePage /> },
+      { path: '/tools/crop-image', element: <CropImagePage /> },
+      { path: '/tools/rotate-image', element: <RotateImagePage /> },
+      { path: '/tools/convert-image', element: <ConvertImagePage /> },
+      { path: '/tools/watermark-image', element: <WatermarkImagePage /> },
+      { path: '/tools/edit-image', element: <EditImagePage /> },
+      { path: '/tools/meme-generator', element: <MemeGeneratorPage /> },
+      // Dedicated interactive PDF tools (iLovePDF style)
       { path: '/tools/merge-pdf', element: <MergePdfPage /> },
       { path: '/tools/add-watermark', element: <AddWatermarkPage /> },
       { path: '/tools/remove-watermark', element: <RemoveWatermarkPage /> },
