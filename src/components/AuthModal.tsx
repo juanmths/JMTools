@@ -51,7 +51,7 @@ export function AuthModal({ isOpen, onClose, initialTab = 'login' }: AuthModalPr
 
     setTimeout(() => {
       if (tab === 'login') {
-        loginWithEmail(email.trim())
+        loginWithEmail(email.trim(), password)
         setSuccessMsg('Berhasil masuk ke akun Anda!')
       } else {
         if (!name.trim()) {
@@ -59,7 +59,7 @@ export function AuthModal({ isOpen, onClose, initialTab = 'login' }: AuthModalPr
           setLoading(false)
           return
         }
-        registerUser(name.trim(), email.trim(), phone.trim() || undefined)
+        registerUser(name.trim(), email.trim(), phone.trim() || undefined, password)
         setSuccessMsg('Pendaftaran berhasil! Selamat datang di JMTools.')
       }
 
@@ -72,8 +72,11 @@ export function AuthModal({ isOpen, onClose, initialTab = 'login' }: AuthModalPr
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in">
-      <div className="relative w-full max-w-md rounded-3xl bg-white p-6 sm:p-8 shadow-2xl ring-1 ring-slate-200 dark:bg-slate-900 dark:ring-slate-800">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-md animate-in fade-in">
+      <div className="relative w-full max-w-md rounded-3xl bg-white/95 p-6 sm:p-8 shadow-2xl ring-1 ring-indigo-500/30 dark:bg-slate-900/95 dark:ring-indigo-500/40 glass-ai-card overflow-hidden">
+        {/* Subtle AI Ambient Orb */}
+        <div className="pointer-events-none absolute -right-16 -top-16 size-40 rounded-full bg-indigo-500/15 blur-3xl" />
+        <div className="pointer-events-none absolute -bottom-16 -left-16 size-40 rounded-full bg-cyan-500/15 blur-3xl" />
         {/* Close Button */}
         <button
           type="button"

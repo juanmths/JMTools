@@ -25,12 +25,15 @@ import {
   type PlanId,
   type PricingPlan,
 } from '../lib/pricingData'
+import { PAYMENT_CONFIG } from '../lib/paymentConfig'
+import { useAuth } from '../lib/authStore'
 import { usePremium } from '../lib/premiumStore'
 
 export default function CheckoutPage() {
   const [searchParams] = useSearchParams()
   const initialPlanId = (searchParams.get('plan') as PlanId) || 'lifetime'
   const premium = usePremium()
+  const { user } = useAuth()
 
   const [selectedPlan, setSelectedPlan] = useState<PricingPlan>(() => {
     return PRICING_PLANS.find((p) => p.id === initialPlanId) || PRICING_PLANS[2]
@@ -91,7 +94,18 @@ export default function CheckoutPage() {
   const handleSimulatePayment = () => {
     setVerifying(true)
     setTimeout(() => {
-      premium.activate(selectedPlan.id)
+      const activeState = premium.activate(selectedPlan.id)
+      if (user?.id) {
+        fetch('/api/auth.php?action=activate_pro', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            user_id: user.id,
+            plan: selectedPlan.id,
+            license_key: activeState.licenseKey,
+          }),
+        }).catch(() => {})
+      }
       setVerifying(false)
       setStep('success')
     }, 1500)
@@ -320,14 +334,14 @@ export default function CheckoutPage() {
                     </p>
 
                     {/* QRIS Graphic Container */}
-                    <div className="mx-auto max-w-[240px] rounded-2xl bg-white p-4 shadow-md ring-1 ring-slate-200 dark:ring-slate-700">
+                    <div className="mx-auto max-w-[260px] rounded-2xl bg-white p-4 shadow-md ring-1 ring-slate-200 dark:ring-slate-700">
                       <div className="border-b border-slate-100 pb-2 mb-2 flex items-center justify-between">
                         <span className="text-[10px] font-extrabold tracking-wider text-rose-600">QRIS</span>
-                        <span className="text-[9px] text-slate-400">GPN</span>
+                        <span className="text-[9px] text-slate-400 font-bold">PEMBAYARAN INSTAN</span>
                       </div>
                       <div className="grid place-items-center aspect-square rounded-xl bg-slate-50 p-2 dark:bg-slate-800">
-                        {/* High quality clean QR SVG representation */}
-                        <svg className="size-44" viewBox="0 0 100 100" fill="currentColor">
+                        {/* Clean High Quality QR Code Vector */}
+                        <svg className="size-48" viewBox="0 0 100 100" fill="currentColor">
                           <path d="M10 10h28v28h-28z m4 4v20h20v-20z m4 4h12v12h-12z" />
                           <path d="M62 10h28v28h-28z m4 4v20h20v-20z m4 4h12v12h-12z" />
                           <path d="M10 62h28v28h-28z m4 4v20h20v-20z m4 4h12v12h-12z" />
@@ -346,12 +360,16 @@ export default function CheckoutPage() {
                           <rect x="78" y="78" width="8" height="8" />
                         </svg>
                       </div>
-                      <p className="mt-2 text-[10px] font-bold text-slate-700">JMTOOLS PRO - PT KREASI DIGITAL</p>
-                      <p className="text-[10px] text-slate-400">NMID: ID102938472910</p>
+                      <p className="mt-2 text-[11px] font-bold text-slate-800 dark:text-slate-200">
+                        {PAYMENT_CONFIG.qris.merchantName}
+                      </p>
+                      <p className="text-[10px] text-slate-400 font-mono">
+                        NMID: {PAYMENT_CONFIG.qris.nmid}
+                      </p>
                     </div>
 
                     <div className="rounded-xl bg-slate-50 p-3 text-xs text-slate-600 dark:bg-slate-800 dark:text-slate-300">
-                      Total Nominal: <span className="font-extrabold text-slate-900 dark:text-white text-sm">Rp {totalPrice.toLocaleString('id-ID')}</span>
+                      Total Tagihan: <span className="font-extrabold text-slate-900 dark:text-white text-sm">Rp {totalPrice.toLocaleString('id-ID')}</span>
                     </div>
                   </div>
                 )}
@@ -360,7 +378,7 @@ export default function CheckoutPage() {
                   <div className="space-y-4">
                     <div className="rounded-2xl bg-blue-50/70 p-5 ring-1 ring-blue-200 dark:bg-blue-950/40 dark:ring-blue-800 space-y-3">
                       <div>
-                        <p className="text-xs text-blue-700 dark:text-blue-300">Nomor Virtual Account:</p>
+                        <p className="text-xs text-blue-700 dark:text-blue-300 font-medium">Nomor Virtual Account:</p>
                         <div className="flex items-center justify-between mt-1">
                           <p className="font-mono text-xl font-extrabold text-blue-950 dark:text-white">
                             {selectedMethod.accountNumber}
@@ -377,13 +395,15 @@ export default function CheckoutPage() {
                       </div>
 
                       <div className="border-t border-blue-200/60 pt-2 flex justify-between text-xs text-blue-800 dark:text-blue-200">
-                        <span>Nama Rekening:</span>
+                        <span>Nama Merchant:</span>
                         <span className="font-bold">{selectedMethod.accountHolder}</span>
                       </div>
 
                       <div className="border-t border-blue-200/60 pt-2 flex justify-between text-xs text-blue-800 dark:text-blue-200">
-                        <span>Total Transfer:</span>
-                        <span className="font-extrabold text-sm">Rp {totalPrice.toLocaleString('id-ID')}</span>
+                        <span>Total Pembayaran:</span>
+                        <span className="font-extrabold text-sm text-indigo-600 dark:text-indigo-400">
+                          Rp {totalPrice.toLocaleString('id-ID')}
+                        </span>
                       </div>
                     </div>
                   </div>
@@ -391,46 +411,116 @@ export default function CheckoutPage() {
 
                 {selectedMethod.category === 'transfer' && (
                   <div className="space-y-4">
-                    <div className="rounded-2xl bg-amber-50/70 p-5 ring-1 ring-amber-200 dark:bg-amber-950/40 dark:ring-amber-800 space-y-3">
-                      <div>
-                        <p className="text-xs text-amber-800 dark:text-amber-200">Rekening Bank BCA:</p>
-                        <div className="flex items-center justify-between mt-1">
-                          <p className="font-mono text-xl font-extrabold text-slate-900 dark:text-white">
-                            {selectedMethod.accountNumber}
-                          </p>
-                          <Button
-                            variant="secondary"
-                            size="md"
-                            className="text-xs"
-                            onClick={() => copyToClipboard(selectedMethod.accountNumber || '', 'rek')}
-                          >
-                            {copiedText === 'rek' ? 'Tersalin!' : 'Salin Rekening'}
-                          </Button>
+                    <p className="text-xs text-slate-600 dark:text-slate-300">
+                      Silakan transfer ke salah satu rekening Bank pemilik JMTools di bawah ini:
+                    </p>
+
+                    {/* Dynamic List of Bank Accounts from PAYMENT_CONFIG */}
+                    <div className="space-y-2.5">
+                      {PAYMENT_CONFIG.bankAccounts.map((acc, idx) => (
+                        <div
+                          key={idx}
+                          className="rounded-2xl bg-amber-50/70 p-4 ring-1 ring-amber-200 dark:bg-amber-950/40 dark:ring-amber-800 space-y-2"
+                        >
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs font-bold text-amber-900 dark:text-amber-200">
+                              {acc.bankName}
+                            </span>
+                            <span className="text-[10px] text-slate-500 font-medium">
+                              a/n {acc.accountHolder}
+                            </span>
+                          </div>
+                          <div className="flex items-center justify-between">
+                            <p className="font-mono text-lg font-extrabold text-slate-900 dark:text-white tracking-wide">
+                              {acc.accountNumber}
+                            </p>
+                            <Button
+                              variant="secondary"
+                              size="md"
+                              className="text-xs"
+                              onClick={() => copyToClipboard(acc.accountNumber, `rek_${idx}`)}
+                            >
+                              {copiedText === `rek_${idx}` ? 'Tersalin!' : 'Salin Rekening'}
+                            </Button>
+                          </div>
                         </div>
-                      </div>
+                      ))}
+                    </div>
 
-                      <div className="border-t border-amber-200/60 pt-2 flex justify-between text-xs text-amber-800 dark:text-amber-200">
-                        <span>Atas Nama:</span>
-                        <span className="font-bold">{selectedMethod.accountHolder}</span>
-                      </div>
-
-                      <div className="border-t border-amber-200/60 pt-2 flex justify-between text-xs text-amber-800 dark:text-amber-200">
-                        <span>Nominal Tepat:</span>
-                        <span className="font-extrabold text-sm text-indigo-600 dark:text-indigo-400">
-                          Rp {totalPrice.toLocaleString('id-ID')}
-                        </span>
-                      </div>
+                    <div className="rounded-xl bg-slate-50 p-3 flex justify-between items-center text-xs dark:bg-slate-800">
+                      <span className="text-slate-600 dark:text-slate-300">Nominal yang harus ditransfer:</span>
+                      <span className="font-extrabold text-indigo-600 dark:text-indigo-400 text-sm">
+                        Rp {totalPrice.toLocaleString('id-ID')}
+                      </span>
                     </div>
 
                     <a
-                      href={`https://wa.me/6281234567890?text=${encodeURIComponent(
-                        `Halo Admin JMTools, saya ingin konfirmasi pembayaran ${selectedPlan.name} sebesar Rp ${totalPrice.toLocaleString('id-ID')} via Transfer Bank. Mohon bantuannya untuk aktivasi lisensi. Terima kasih!`,
+                      href={`https://wa.me/${PAYMENT_CONFIG.whatsappNumber}?text=${encodeURIComponent(
+                        `${PAYMENT_CONFIG.whatsappWelcomeText} ${selectedPlan.name} (Rp ${totalPrice.toLocaleString('id-ID')}) via Transfer Bank. Pembeli: ${user?.name || 'Pelanggan'} (${user?.email || '-'}). Mohon bantuannya untuk verifikasi pembayaran. Terima kasih!`,
                       )}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 px-5 py-3 text-xs font-bold text-white shadow-sm hover:bg-emerald-500 transition-all"
                     >
-                      <ExternalLink className="size-4" /> Konfirmasi Pembayaran via WhatsApp
+                      <ExternalLink className="size-4" /> Konfirmasi Pembayaran via WhatsApp Pemilik
+                    </a>
+                  </div>
+                )}
+
+                {selectedMethod.category === 'ewallet' && (
+                  <div className="space-y-4">
+                    <p className="text-xs text-slate-600 dark:text-slate-300">
+                      Transfer saldo e-wallet ke nomor akun dompet digital kami di bawah:
+                    </p>
+
+                    {/* Dynamic List of E-Wallets from PAYMENT_CONFIG */}
+                    <div className="space-y-2.5">
+                      {PAYMENT_CONFIG.ewallets.map((ew, idx) => (
+                        <div
+                          key={idx}
+                          className="rounded-2xl bg-emerald-50/70 p-4 ring-1 ring-emerald-200 dark:bg-emerald-950/40 dark:ring-emerald-800 space-y-2"
+                        >
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs font-bold text-emerald-900 dark:text-emerald-200">
+                              {ew.name}
+                            </span>
+                            <span className="text-[10px] text-slate-500 font-medium">
+                              a/n {ew.accountHolder}
+                            </span>
+                          </div>
+                          <div className="flex items-center justify-between">
+                            <p className="font-mono text-lg font-extrabold text-slate-900 dark:text-white tracking-wide">
+                              {ew.phoneNumber}
+                            </p>
+                            <Button
+                              variant="secondary"
+                              size="md"
+                              className="text-xs"
+                              onClick={() => copyToClipboard(ew.phoneNumber, `ew_${idx}`)}
+                            >
+                              {copiedText === `ew_${idx}` ? 'Tersalin!' : 'Salin Nomor'}
+                            </Button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+
+                    <div className="rounded-xl bg-slate-50 p-3 flex justify-between items-center text-xs dark:bg-slate-800">
+                      <span className="text-slate-600 dark:text-slate-300">Total Pembayaran:</span>
+                      <span className="font-extrabold text-emerald-600 dark:text-emerald-400 text-sm">
+                        Rp {totalPrice.toLocaleString('id-ID')}
+                      </span>
+                    </div>
+
+                    <a
+                      href={`https://wa.me/${PAYMENT_CONFIG.whatsappNumber}?text=${encodeURIComponent(
+                        `${PAYMENT_CONFIG.whatsappWelcomeText} ${selectedPlan.name} (Rp ${totalPrice.toLocaleString('id-ID')}) via E-Wallet (${selectedMethod.name}). Pembeli: ${user?.name || 'Pelanggan'} (${user?.email || '-'}). Terima kasih!`,
+                      )}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 px-5 py-3 text-xs font-bold text-white shadow-sm hover:bg-emerald-500 transition-all"
+                    >
+                      <ExternalLink className="size-4" /> Konfirmasi Pembayaran via WhatsApp Pemilik
                     </a>
                   </div>
                 )}

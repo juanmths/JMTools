@@ -91,10 +91,18 @@ export function loginWithGoogle(): User {
   }
   localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(user))
   window.dispatchEvent(new Event(AUTH_EVENT_NAME))
+
+  // Sync to Hostinger MySQL Database in background
+  fetch('/api/auth.php?action=google', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email: user.email, name: user.name, avatar: user.avatar }),
+  }).catch(() => {})
+
   return user
 }
 
-export function loginWithEmail(email: string): User {
+export function loginWithEmail(email: string, password?: string): User {
   const name = email.split('@')[0]
   const user: User = {
     id: `u_${Date.now()}`,
@@ -105,10 +113,20 @@ export function loginWithEmail(email: string): User {
   }
   localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(user))
   window.dispatchEvent(new Event(AUTH_EVENT_NAME))
+
+  // Sync to Hostinger MySQL Database in background
+  if (password) {
+    fetch('/api/auth.php?action=login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password }),
+    }).catch(() => {})
+  }
+
   return user
 }
 
-export function registerUser(name: string, email: string, phone?: string): User {
+export function registerUser(name: string, email: string, phone?: string, password?: string): User {
   const user: User = {
     id: `u_${Date.now()}`,
     name,
@@ -119,6 +137,14 @@ export function registerUser(name: string, email: string, phone?: string): User 
   }
   localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(user))
   window.dispatchEvent(new Event(AUTH_EVENT_NAME))
+
+  // Sync to Hostinger MySQL Database in background
+  fetch('/api/auth.php?action=register', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name, email, phone, password: password || '123456' }),
+  }).catch(() => {})
+
   return user
 }
 
