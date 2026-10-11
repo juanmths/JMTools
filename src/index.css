@@ -74,6 +74,20 @@ body {
   -webkit-text-fill-color: transparent;
 }
 
+.font-stylish {
+  font-family: 'Instrument Serif', 'Playfair Display', Georgia, serif;
+}
+
+.stylish-gradient-text {
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 25%, #d946ef 50%, #ec4899 75%, #06b6d4 100%);
+  background-size: 220% 220%;
+  animation: aiGradientShift 4.5s ease infinite;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  display: inline-block;
+  filter: drop-shadow(0 6px 20px rgba(168, 85, 247, 0.35));
+}
+
 .ai-btn-glow {
   position: relative;
   overflow: hidden;

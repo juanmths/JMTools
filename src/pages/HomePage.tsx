@@ -67,10 +67,33 @@ export default function HomePage() {
         </div>
 
         {/* Dynamic AI Headline */}
-        <h1 className="text-4xl font-extrabold tracking-tight sm:text-6xl text-slate-900 dark:text-white leading-[1.15]">
+        <h1 className="text-4xl font-extrabold tracking-tight sm:text-6xl text-slate-900 dark:text-white leading-[1.2]">
           Alat PDF & Gambar Pintar <br />
-          <span className="ai-gradient-text">
-            Semua Dalam Satu Platform
+          <span className="relative inline-block mt-2 sm:mt-3">
+            <span className="font-stylish italic font-normal text-4xl sm:text-6xl md:text-7xl stylish-gradient-text tracking-wide px-1">
+              Semua Dalam Satu Platform
+            </span>
+            {/* Glowing artistic curved underline */}
+            <svg
+              className="absolute -bottom-2.5 left-1/2 -translate-x-1/2 w-[92%] h-3 text-indigo-500 pointer-events-none drop-shadow-[0_2px_8px_rgba(236,72,153,0.4)]"
+              viewBox="0 0 280 12"
+              fill="none"
+              preserveAspectRatio="none"
+            >
+              <path
+                d="M3 9.5C70 2.5 210 2.5 277 9.5"
+                stroke="url(#stylishUnderlineGlow)"
+                strokeWidth="3.5"
+                strokeLinecap="round"
+              />
+              <defs>
+                <linearGradient id="stylishUnderlineGlow" x1="3" y1="9" x2="277" y2="9" gradientUnits="userSpaceOnUse">
+                  <stop stopColor="#6366f1" stopOpacity="0.3" />
+                  <stop offset="0.5" stopColor="#ec4899" stopOpacity="0.95" />
+                  <stop offset="1" stopColor="#06b6d4" stopOpacity="0.3" />
+                </linearGradient>
+              </defs>
+            </svg>
           </span>
         </h1>
 
