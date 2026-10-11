@@ -682,6 +682,20 @@ export default function CheckoutPage() {
                   </li>
                 </ul>
               </div>
+
+              {/* Trust & Guarantee Box */}
+              <div className="rounded-2xl border border-emerald-500/30 bg-emerald-50/60 p-4 dark:bg-emerald-950/30 dark:border-emerald-800/50 space-y-2 text-xs">
+                <div className="flex items-center gap-2 font-bold text-emerald-900 dark:text-emerald-200">
+                  <ShieldCheck className="size-4 text-emerald-600" />
+                  <span>Jaminan Keamanan & Bebas Risiko</span>
+                </div>
+                <p className="text-[11px] text-emerald-800 dark:text-emerald-300 leading-relaxed">
+                  Pembayaran Anda 100% aman dan dilindungi <strong>Garansi Uang Kembali 14 Hari</strong>. Dikelola langsung secara transparan oleh Juan Karly Matheus.
+                </p>
+                <div className="pt-1.5 border-t border-emerald-200/60 dark:border-emerald-800/40 text-[10px] text-emerald-700 dark:text-emerald-400 font-medium">
+                  Bantuan Langsung WhatsApp: <strong>0823-9958-5050</strong>
+                </div>
+              </div>
             </Card>
           </div>
         </div>

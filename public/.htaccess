@@ -1,6 +1,51 @@
+# ===============================================================
+# JMTOOLS ENTERPRISE SECURITY & SPA CONFIGURATION (.htaccess)
+# ===============================================================
+
+# 1. PAKSA PROTOKOL HTTPS (SSL 256-BIT ENCRYPTION)
 <IfModule mod_rewrite.c>
   RewriteEngine On
   RewriteBase /
+
+  # Redirect HTTP ke HTTPS secara otomatis demi keamanan & gembok hijau browser
+  RewriteCond %{HTTPS} off
+  RewriteCond %{HTTP:X-Forwarded-Proto} !https
+  RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+</IfModule>
+
+# 2. BLOKIR AKSES KE FILE SENSITIF (.sql, .env, .git, dll)
+<FilesMatch "\.(sql|env|log|git|md|yml|yaml|ini|sh|bak)$">
+  <IfModule mod_authz_core.c>
+    Require all denied
+  </IfModule>
+  <IfModule !mod_authz_core.c>
+    Order Allow,Deny
+    Deny from all
+  </IfModule>
+</FilesMatch>
+
+# 3. BLOKIR PROBE SQL INJECTION & MALICIOUS QUERY STRINGS DI URL
+<IfModule mod_rewrite.c>
+  # Blokir percobaan injeksi SQL standar di query string
+  RewriteCond %{QUERY_STRING} (?:concat|union|select|insert|update|delete|drop|table|information_schema|<script|%3Cscript) [NC]
+  RewriteRule .* - [F,L]
+
+  # Blokir null byte (%00) dan directory traversal (..)
+  RewriteCond %{QUERY_STRING} (?:%00|\.\./|\.\.\\) [NC]
+  RewriteRule .* - [F,L]
+</IfModule>
+
+# 4. HTTP SECURITY HEADERS (Mencegah Sniffing, Clickjacking, dan XSS)
+<IfModule mod_headers.c>
+  Header always set X-Content-Type-Options "nosniff"
+  Header always set X-Frame-Options "SAMEORIGIN"
+  Header always set X-XSS-Protection "1; mode=block"
+  Header always set Referrer-Policy "strict-origin-when-cross-origin"
+  Header always set Permissions-Policy "geolocation=(), camera=(), microphone=()"
+</IfModule>
+
+# 5. ROUTING SINGLE PAGE APPLICATION (REACT VITE ROUTER)
+<IfModule mod_rewrite.c>
   RewriteRule ^index\.html$ - [L]
   RewriteCond %{REQUEST_FILENAME} !-f
   RewriteCond %{REQUEST_FILENAME} !-d
@@ -8,7 +53,7 @@
   RewriteRule . /index.html [L]
 </IfModule>
 
-# Caching for static assets
+# 6. BROWSER CACHING (OPTIMASI KECEPATAN WEBSITE)
 <IfModule mod_expires.c>
   ExpiresActive On
   ExpiresByType image/svg+xml "access plus 1 month"

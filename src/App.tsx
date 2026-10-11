@@ -3,7 +3,7 @@ import { Layout } from './components/Layout'
 import CheckoutPage from './pages/CheckoutPage'
 import ConvertPage from './pages/ConvertPage'
 import HomePage from './pages/HomePage'
-import { FaqPage, PrivacyPage } from './pages/InfoPages'
+import { ContactPage, FaqPage, PrivacyPage, RefundPage, TermsPage } from './pages/InfoPages'
 import NotFoundPage from './pages/NotFoundPage'
 import PricingPage from './pages/PricingPage'
 import ResultPage from './pages/ResultPage'
@@ -58,6 +58,9 @@ const router = createBrowserRouter([
       { path: '/tools/:slug', element: <ToolLandingPage /> },
       { path: '/faq', element: <FaqPage /> },
       { path: '/privacy', element: <PrivacyPage /> },
+      { path: '/terms', element: <TermsPage /> },
+      { path: '/refund', element: <RefundPage /> },
+      { path: '/contact', element: <ContactPage /> },
       { path: '*', element: <NotFoundPage /> },
     ],
   },

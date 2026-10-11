@@ -4,14 +4,18 @@ import {
   FileText,
   Image as ImageIcon,
   Layers,
+  Lock,
   LogOut,
   Menu,
+  Phone,
+  ShieldCheck,
   User as UserIcon,
   X,
 } from 'lucide-react'
 import { useState } from 'react'
 import { Link, NavLink, Outlet, ScrollRestoration, useLocation } from 'react-router-dom'
 import { ALL_TOOLS, CATEGORIES } from '../lib/pdfTools'
+import { PAYMENT_CONFIG } from '../lib/paymentConfig'
 import { useAuth } from '../lib/authStore'
 import { usePremium } from '../lib/premiumStore'
 import { cn } from '../lib/utils'
@@ -387,26 +391,105 @@ export function Layout() {
         <Outlet />
       </main>
 
-      <footer className="border-t border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-950">
-        <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-4 px-4 py-8 text-center text-xs text-slate-500 sm:flex-row sm:text-left">
-          <p>© {YEAR} JMTools. Alat pengolah PDF dan optimasi gambar online.</p>
-          <div className="flex flex-wrap gap-4">
-            <Link to="/pricing" className="font-bold text-amber-600 hover:underline">
-              👑 Paket Seumur Hidup
-            </Link>
-            <Link to="/faq" className="hover:underline">
-              FAQ
-            </Link>
-            <Link to="/privacy" className="hover:underline">
-              Privasi
-            </Link>
-            <Link to="/tools/compress-image" className="hover:underline">
-              Kompres Gambar
-            </Link>
-            <Link to="/tools/merge-pdf" className="hover:underline">
-              Gabungkan PDF
-            </Link>
+      <footer className="border-t border-slate-200 bg-slate-50/70 dark:border-slate-800 dark:bg-slate-950/90 text-xs">
+        {/* Trust Badges Strip */}
+        <div className="border-b border-slate-200/60 dark:border-slate-800/60 py-4 bg-white/50 dark:bg-slate-900/40">
+          <div className="mx-auto max-w-6xl px-4 grid grid-cols-2 md:grid-cols-4 gap-4 text-center md:text-left">
+            <div className="flex items-center justify-center md:justify-start gap-2 text-slate-700 dark:text-slate-300 font-semibold">
+              <Lock className="size-4 text-emerald-600 dark:text-emerald-400" />
+              <span>Enkripsi SSL 256-Bit</span>
+            </div>
+            <div className="flex items-center justify-center md:justify-start gap-2 text-slate-700 dark:text-slate-300 font-semibold">
+              <ShieldCheck className="size-4 text-indigo-600 dark:text-indigo-400" />
+              <span>Garansi 14 Hari Uang Kembali</span>
+            </div>
+            <div className="flex items-center justify-center md:justify-start gap-2 text-slate-700 dark:text-slate-300 font-semibold">
+              <span className="size-2 rounded-full bg-emerald-500 animate-pulse" />
+              <span>Privasi Dokumen Zero-Knowledge</span>
+            </div>
+            <div className="flex items-center justify-center md:justify-start gap-2 text-slate-700 dark:text-slate-300 font-semibold">
+              <Phone className="size-4 text-emerald-600 dark:text-emerald-400" />
+              <span>Bantuan WA: 0823-9958-5050</span>
+            </div>
           </div>
+        </div>
+
+        {/* Multi-Column Links */}
+        <div className="mx-auto max-w-6xl px-4 py-10 grid grid-cols-1 md:grid-cols-4 gap-8">
+          {/* Column 1: Brand & Founder */}
+          <div className="space-y-3">
+            <div className="flex items-center gap-2 font-bold tracking-tight text-base text-slate-900 dark:text-white">
+              <span className="grid size-7 place-items-center rounded-lg bg-indigo-600 text-white shadow-sm">
+                <Layers className="size-4" />
+              </span>
+              JMTools
+            </div>
+            <p className="text-slate-500 text-[11px] leading-relaxed">
+              Platform pengolah berkas PDF & manipulasi gambar online yang aman, cepat, dan tanpa batas.
+            </p>
+            <div className="rounded-xl bg-slate-100 p-2.5 dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800 text-[11px] text-slate-600 dark:text-slate-400">
+              <p className="font-bold text-slate-900 dark:text-white">Pengelola Resmi:</p>
+              <p>JUAN KARLY MATHEUS</p>
+              <p className="text-[10px] text-slate-400">Terdaftar Resmi di BCA & BRI</p>
+            </div>
+          </div>
+
+          {/* Column 2: Alat PDF */}
+          <div className="space-y-2.5">
+            <h4 className="font-bold text-slate-900 dark:text-white uppercase tracking-wider text-[11px]">
+              Alat PDF Unggulan
+            </h4>
+            <ul className="space-y-1.5 text-slate-500">
+              <li><Link to="/tools/merge-pdf" className="hover:text-indigo-600 transition-colors">Gabungkan PDF</Link></li>
+              <li><Link to="/tools/split-pdf" className="hover:text-indigo-600 transition-colors">Pisahkan Halaman PDF</Link></li>
+              <li><Link to="/tools/edit-pdf" className="hover:text-indigo-600 transition-colors">Edit Teks Dokumen PDF</Link></li>
+              <li><Link to="/tools/add-watermark" className="hover:text-indigo-600 transition-colors">Beri Watermark PDF</Link></li>
+              <li><Link to="/tools/protect-pdf" className="hover:text-indigo-600 transition-colors">Kunci & Sandi PDF</Link></li>
+            </ul>
+          </div>
+
+          {/* Column 3: Alat Gambar */}
+          <div className="space-y-2.5">
+            <h4 className="font-bold text-slate-900 dark:text-white uppercase tracking-wider text-[11px]">
+              Alat Gambar Unggulan
+            </h4>
+            <ul className="space-y-1.5 text-slate-500">
+              <li><Link to="/tools/compress-image" className="hover:text-indigo-600 transition-colors">Kompres Ukuran Foto</Link></li>
+              <li><Link to="/tools/resize-image" className="hover:text-indigo-600 transition-colors">Ubah Dimensi (Resize)</Link></li>
+              <li><Link to="/tools/crop-image" className="hover:text-indigo-600 transition-colors">Potong Foto (Crop)</Link></li>
+              <li><Link to="/tools/convert-image" className="hover:text-indigo-600 transition-colors">Konversi JPG/PNG/WEBP</Link></li>
+              <li><Link to="/tools/meme-generator" className="hover:text-indigo-600 transition-colors">Meme Generator</Link></li>
+            </ul>
+          </div>
+
+          {/* Column 4: Legal & Kepercayaan */}
+          <div className="space-y-2.5">
+            <h4 className="font-bold text-slate-900 dark:text-white uppercase tracking-wider text-[11px]">
+              Legalitas & Layanan
+            </h4>
+            <ul className="space-y-1.5 text-slate-500">
+              <li><Link to="/pricing" className="font-bold text-amber-600 hover:text-amber-500 transition-colors">👑 Akses Seumur Hidup</Link></li>
+              <li><Link to="/privacy" className="hover:text-indigo-600 transition-colors">Kebijakan Privasi Data</Link></li>
+              <li><Link to="/terms" className="hover:text-indigo-600 transition-colors">Syarat & Ketentuan Layanan</Link></li>
+              <li><Link to="/refund" className="hover:text-indigo-600 transition-colors">Garansi Pengembalian Dana</Link></li>
+              <li><Link to="/faq" className="hover:text-indigo-600 transition-colors">Pertanyaan Umum (FAQ)</Link></li>
+              <li>
+                <a
+                  href={`https://wa.me/${PAYMENT_CONFIG.whatsappNumber}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="hover:text-indigo-600 transition-colors font-semibold text-emerald-600 dark:text-emerald-400"
+                >
+                  Hubungi Kami (WhatsApp)
+                </a>
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        {/* Bottom Bar */}
+        <div className="border-t border-slate-200 dark:border-slate-800 py-4 text-center text-[11px] text-slate-400">
+          <p>© {YEAR} JMTools. Dikelola resmi oleh Juan Karly Matheus. Semua Hak Cipta Dilindungi Undang-Undang.</p>
         </div>
       </footer>
       <ScrollRestoration />

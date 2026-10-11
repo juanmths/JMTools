@@ -189,16 +189,16 @@ export const PAYMENT_METHODS: PaymentMethod[] = [
   },
   {
     id: 'transfer_manual',
-    name: 'Transfer Bank Manual (BCA / Mandiri) & WhatsApp',
+    name: 'Transfer Bank Langsung (BCA / BRI) & WhatsApp',
     category: 'transfer',
     iconName: 'CreditCard',
-    accountNumber: '8730-192-819',
-    accountHolder: 'Juan Matheus (Founder JMTools)',
+    accountNumber: '7955528590',
+    accountHolder: 'JUAN KARLY MATHEUS',
     fee: 0,
     instructions: [
-      'Transfer sesuai total nominal ke rekening BCA: 8730-192-819 a/n Juan Matheus.',
-      'Simpan bukti transfer / struk pembayaran.',
-      'Klik tombol "Konfirmasi WhatsApp" untuk mengirim bukti transfer ke tim kami. Akun langsung diaktifkan dalam 5 menit!',
+      'Transfer sesuai total nominal ke rekening BCA: 7955528590 atau BRI: 7772-01-000999-53-4 a/n JUAN KARLY MATHEUS.',
+      'Simpan bukti transfer / struk pembayaran m-Banking.',
+      'Klik tombol "Konfirmasi WhatsApp" untuk mengirim bukti transfer ke WhatsApp resmi kami (0823-9958-5050). Lisensi Pro aktif dalam hitungan menit!',
     ],
   },
 ]
