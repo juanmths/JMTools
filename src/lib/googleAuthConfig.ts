@@ -27,18 +27,17 @@ export interface GoogleAuthConfig {
 }
 
 export const GOOGLE_AUTH_CONFIG: GoogleAuthConfig = {
-  // Ganti string di bawah ini dengan Client ID asli Anda dari Google Cloud Console:
-  clientId: 'YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com',
+  // Diambil secara aman dari .env (VITE_GOOGLE_CLIENT_ID)
+  clientId: (import.meta.env.VITE_GOOGLE_CLIENT_ID as string) || '',
   enabled: true,
 }
 
 /**
- * Memeriksa apakah pemilik website sudah memasukkan Google Client ID asli
+ * Memeriksa apakah Google Client ID aktif dan valid
  */
 export function isGoogleClientConfigured(): boolean {
   return (
     Boolean(GOOGLE_AUTH_CONFIG.clientId) &&
-    !GOOGLE_AUTH_CONFIG.clientId.startsWith('YOUR_GOOGLE_CLIENT_ID') &&
     GOOGLE_AUTH_CONFIG.clientId.includes('.apps.googleusercontent.com')
   )
 }

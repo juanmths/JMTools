@@ -9,7 +9,7 @@ declare global {
     google?: {
       accounts: {
         id: {
-          initialize: (config: { client_id: string; callback: (res: { credential: string }) => void }) => void
+          initialize: (config: Record<string, unknown>) => void
           renderButton: (element: HTMLElement, options: Record<string, unknown>) => void
           prompt: () => void
         }
@@ -75,18 +75,25 @@ export function AuthModal({ isOpen, onClose, initialTab = 'login' }: AuthModalPr
         window.google.accounts.id.initialize({
           client_id: GOOGLE_AUTH_CONFIG.clientId,
           callback: handleGoogleResponse,
+          auto_select: false,
         })
-        const btnContainer = document.getElementById('official-google-btn-container')
-        if (btnContainer) {
-          btnContainer.innerHTML = ''
-          window.google.accounts.id.renderButton(btnContainer, {
-            theme: 'outline',
-            size: 'large',
-            width: 320,
-            text: 'continue_with',
-            shape: 'rectangular',
-          })
+        const renderBtn = () => {
+          const btnContainer = document.getElementById('official-google-btn-container')
+          if (btnContainer && window.google?.accounts?.id) {
+            btnContainer.innerHTML = ''
+            window.google.accounts.id.renderButton(btnContainer, {
+              theme: 'outline',
+              size: 'large',
+              width: 320,
+              text: 'continue_with',
+              shape: 'rectangular',
+              logo_alignment: 'left',
+            })
+          }
         }
+        renderBtn()
+        setTimeout(renderBtn, 150)
+        setTimeout(renderBtn, 450)
       }
     }
 
@@ -308,7 +315,16 @@ export function AuthModal({ isOpen, onClose, initialTab = 'login' }: AuthModalPr
           <div className="space-y-4">
             {/* Google Sign In Container (Official or Custom) */}
             {isRealGoogleReady ? (
-              <div id="official-google-btn-container" className="flex justify-center" />
+              <div className="space-y-2 text-center">
+                <div id="official-google-btn-container" className="flex justify-center min-h-[44px]" />
+                <button
+                  type="button"
+                  onClick={() => setShowGoogleCustomizer(true)}
+                  className="text-[11px] text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
+                >
+                  Opsi: Tes atau sesuaikan akun Google manual
+                </button>
+              </div>
             ) : (
               <button
                 type="button"
